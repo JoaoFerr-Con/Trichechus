@@ -1,0 +1,222 @@
+@page "/perfis"
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@using System.Security.Claims
+@using Trichechus.Frontend.Layout.shared;
+@attribute [Authorize]
+@inject PerfilService PerfilService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Perfis</PageTitle>
+
+<h1>Gerenciamento de Perfis</h1>
+
+<div class="row mb-3">
+	<div class="col">
+		<RadzenButton Icon="add" Text="Novo Perfil" ButtonStyle="ButtonStyle.Primary" Click="@OpenCreateDialog" />
+	</div>
+	<div class="col-md-4">
+		<RadzenTextBox Placeholder="Buscar Perfis..." @bind-Value="@searchString" Change="@OnSearch" class="w-100" />
+	</div>
+	<div class="col-md-auto">
+		<ExportOptions TItem="PerfilDto" Data="@perfis" FileName="perfis" Grid="@perfisGrid" />
+	</div>
+</div>
+<AdvancedFilter TItem="PerfilDto" OnApplyFilters="@ApplyFilters" OnClearFilters="@ClearFilters">
+	<FilterContent>
+		<div class="col-md-3 mb-2">
+			<RadzenFormField Text="Título" Variant="Variant.Filled">
+				<RadzenTextBox @bind-Value="@filtroNome" class="w-100" />
+			</RadzenFormField>
+		</div>
+	</FilterContent>
+</AdvancedFilter>
+
+<RadzenDataGrid @ref="perfisGrid" Data="@perfis" TItem="PerfilDto" AllowFiltering="true" AllowColumnResize="true"
+	AllowAlternatingRows="true" FilterMode="FilterMode.Advanced" AllowSorting="true" PageSize="10" AllowPaging="true"
+	PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true" IsLoading="@isLoading">
+	<Columns>
+		<RadzenDataGridColumn TItem="PerfilDto" Property="Nome" Title="Nome" Width="200px" />
+		<RadzenDataGridColumn TItem="PerfilDto" Property="Descricao" Title="Descrição" Width="300px">
+			<Template Context="data">
+				@(data.Descricao?.Length > 50 ? data.Descricao.Substring(0, 50) + "..." : data.Descricao)
+			</Template>
+		</RadzenDataGridColumn>
+
+		<RadzenDataGridColumn TItem="PerfilDto" Title="Ações" Width="180px" TextAlign="TextAlign.Center">
+			<Template Context="perfil">
+				<RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
+					Click="@(() => ViewDetails(perfil))" Title="Visualizar" />
+				<RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+					Click="@(() => OpenEditDialog(perfil))" Title="Editar" />
+				<RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+					Click="@(() => ConfirmDelete(perfil))" Title="Excluir" />
+			</Template>
+		</RadzenDataGridColumn>
+	</Columns>
+</RadzenDataGrid>
+
+@code {
+	private IEnumerable<PerfilDto>? perfis;
+	private IEnumerable<PerfilDto>? allPerfis;
+	private RadzenDataGrid<PerfilDto>? perfisGrid;
+	private bool isLoading = true;
+	private string searchString = "";
+	@* private string? userName; *@
+
+	private string? filtroNome;
+	private IEnumerable<string> situacoes = new List<string> { "Pendente", "Em Andamento", "Concluída", "Cancelada" };
+
+	private async Task ApplyFilters()
+	{
+		perfis = allPerfis;
+
+		if (!string.IsNullOrWhiteSpace(filtroNome))
+		{
+			perfis = perfis!.Where(a => a.Nome.Contains(filtroNome, StringComparison.OrdinalIgnoreCase));
+		}
+
+		await Task.Delay(1);
+	}
+
+	private void ClearFilters()
+	{
+		filtroNome = null;
+
+		perfis = allPerfis;
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		@* var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+		var user = authState.User; *@
+
+		@* if (user.Identity!.IsAuthenticated)
+		{
+			userName = user.FindFirst(ClaimTypes.Name)?.Value;
+		} *@
+
+		await LoadPerfils();
+	}
+
+	private async Task LoadPerfils()
+	{
+		try
+		{
+			isLoading = true;
+			allPerfis = await PerfilService.GetAllPerfilsAsync();
+			perfis = allPerfis;
+			isLoading = false;
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao carregar perfils: {ex.Message}");
+			isLoading = false;
+		}
+	}
+
+	private void OnSearch(string value)
+	{
+		if (string.IsNullOrWhiteSpace(value))
+		{
+			perfis = allPerfis;
+		}
+		else
+		{
+			perfis = allPerfis!.Where(a =>
+			(a.Nome?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+			(a.Descricao?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false)
+			);
+		}
+	}
+
+	private async Task OpenCreateDialog()
+	{
+		var parameters = new Dictionary<string, object>{{ "Perfis", perfis! }};
+
+		var result = await DialogService.OpenAsync<NovoPerfilDialog>("Novo Perfil",
+			parameters,
+			new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+
+		if (result != null)
+		{
+			await LoadPerfils();
+			NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Perfil criado com sucesso!");
+		}
+	}
+
+	private async Task OpenEditDialog(PerfilDto perfil)
+	{
+		var result = await DialogService.OpenAsync<EditarPerfilDialog>("Editar Perfil",
+		new Dictionary<string, object> { { "PerfilId", perfil.Id } },
+		new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+
+		if (result != null)
+		{
+			await LoadPerfils();
+			NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Perfil atualizada com sucesso!");
+		}
+	}
+
+	private async Task ViewDetails(PerfilDto perfil)
+	{
+		await DialogService.OpenAsync<DetalhesPerfilDialog>("Detalhes da Perfil",
+		new Dictionary<string, object> { { "PerfilId", perfil.Id } },
+		new DialogOptions { Width = "800px", Height = "650px", Resizable = true, Draggable = true });
+	}
+
+	@* private async Task ConfirmDelete(PerfilDto perfil)
+	{
+		var result = await DialogService.Confirm(
+		$"Tem certeza que deseja excluir a perfil '{perfil.Titulo}'?",
+		"Confirmar Exclusão",
+		new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+
+		if (result == true)
+		{
+			try
+			{
+				await PerfilService.DeletePerfilAsync(perfil.Id);
+				await LoadPerfils();
+				NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Perfil excluída com sucesso!");
+			}
+			catch (Exception ex)
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao excluir perfil: {ex.Message}");
+			}
+		}
+	} *@
+
+	private async Task ConfirmDelete(PerfilDto perfil)
+	{
+		var parameters = new Dictionary<string, object>
+{
+{ "Title", "Excluir Perfil" },
+{ "Message", $"Tem certeza que deseja excluir a perfil '{perfil.Nome}'? Esta ação não pode ser desfeita." },
+{ "Icon", "delete_forever" },
+{ "Color", "danger" },
+{ "ConfirmText", "Excluir" },
+{ "CancelText", "Cancelar" }
+};
+
+		var result = await DialogService.OpenAsync<ConfirmDialog>("", parameters,
+		new DialogOptions { Width = "400px", Height = "300px", CloseDialogOnOverlayClick = true });
+
+		if (result == true)
+		{
+			try
+			{
+				await PerfilService.DeletePerfilAsync(perfil.Id, perfil);
+				await LoadPerfils();
+				NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Perfil excluída com sucesso!");
+			}
+			catch (Exception ex)
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao excluir perfil: {ex.Message}");
+			}
+		}
+	}
+
+}

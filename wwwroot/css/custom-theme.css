@@ -1,0 +1,103 @@
+:root {
+	--rz-primary: #2c3e50;
+	--rz-primary-light: #34495e;
+	--rz-primary-lighter: #3c5a76;
+	--rz-primary-dark: #1a252f;
+	--rz-primary-darker: #0d1318;
+
+	--rz-secondary: #95a5a6;
+	--rz-secondary-light: #b1bdbd;
+	--rz-secondary-lighter: #c8cfcf;
+	--rz-secondary-dark: #7f8c8d;
+	--rz-secondary-darker: #667273;
+
+	--rz-info: #3498db;
+	--rz-info-light: #5faee3;
+	--rz-info-lighter: #85c1ea;
+	--rz-info-dark: #2980b9;
+	--rz-info-darker: #216897;
+
+	--rz-success: #2ecc71;
+	--rz-success-light: #54d98c;
+	--rz-success-lighter: #7ee2a8;
+	--rz-success-dark: #27ae60;
+	--rz-success-darker: #1e8449;
+
+	--rz-warning: #f39c12;
+	--rz-warning-light: #f5b041;
+	--rz-warning-lighter: #f8c471;
+	--rz-warning-dark: #d35400;
+	--rz-warning-darker: #a04000;
+
+	--rz-danger: #e74c3c;
+	--rz-danger-light: #ec7063;
+	--rz-danger-lighter: #f1948a;
+	--rz-danger-dark: #c0392b;
+	--rz-danger-darker: #922b21;
+
+	--rz-text-color: #2c3e50;
+	--rz-text-secondary-color: #7f8c8d;
+	--rz-text-disabled-color: #bdc3c7;
+
+	--rz-body-background-color: #f5f5f5;
+	--rz-base-background-color: #ffffff;
+}
+
+/* Personalização de componentes */
+.rz-sidebar {
+	background-color: var(--rz-primary);
+}
+
+.rz-sidebar .rz-panelmenu .rz-panelmenu-header {
+	color: #ecf0f1;
+}
+
+.rz-sidebar .rz-panelmenu .rz-panelmenu-header:hover {
+	background-color: var(--rz-primary-light);
+}
+
+.rz-sidebar .rz-panelmenu .rz-panelmenu-content .rz-panelmenu-item {
+	color: #ecf0f1;
+}
+
+.rz-sidebar .rz-panelmenu .rz-panelmenu-content .rz-panelmenu-item:hover {
+	background-color: var(--rz-primary-light);
+}
+
+.rz-card {
+	border-radius: 8px;
+	box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+	transition: all 0.3s ease;
+}
+
+.rz-card:hover {
+	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+}
+
+.rz-button {
+	border-radius: 4px;
+	transition: all 0.2s ease;
+}
+
+.rz-button:hover {
+	transform: translateY(-2px);
+	box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.rz-datatable-header {
+	background-color: var(--rz-base-background-color);
+	border-bottom: 2px solid var(--rz-primary);
+}
+
+.rz-datatable-odd>td {
+	background-color: rgba(236, 240, 241, 0.3);
+}
+
+.rz-datatable-data td {
+	padding: 0.75rem 1rem;
+}
+
+.rz-badge {
+	border-radius: 12px;
+	padding: 0.25rem 0.75rem;
+}

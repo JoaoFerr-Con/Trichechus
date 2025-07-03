@@ -1,0 +1,34 @@
+@typeparam TItem
+@inject IJSRuntime JSRuntime
+
+<RadzenMenu>
+    <RadzenMenuItem Text="Exportar" Icon="download">
+        <RadzenMenuItem Text="Excel" Icon="file_download" Click="@ExportToExcel" />
+        <RadzenMenuItem Text="CSV" Icon="file_download" Click="@ExportToCsv" />
+    </RadzenMenuItem>
+</RadzenMenu>
+
+
+@code {
+    [Parameter] public IEnumerable<TItem>? Data { get; set; }
+    [Parameter] public string FileName { get; set; } = "export";
+    [Parameter] public RadzenDataGrid<TItem>? Grid { get; set; }
+
+    @* private RadzenDataGridExport<TItem>? exporter; *@
+
+    private void ExportToExcel()
+    {
+        @* exporter?.Export(Radzen.ExportFormat.Excel, FileName); *@
+    }
+
+    private void ExportToCsv()
+    {
+        @* exporter?.Export(Radzen.ExportFormat.Csv, FileName); *@
+    }
+
+    // PDF não é suportado diretamente pela versão gratuita.
+    private void ExportToPdf()
+    {
+        // Se necessário, implemente exportação via jsPDF, IJSRuntime ou outro lib.
+    }
+}

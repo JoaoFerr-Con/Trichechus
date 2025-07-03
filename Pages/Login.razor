@@ -1,0 +1,110 @@
+﻿@page "/login"
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject AuthStateProvider AuthStateProvider
+
+@inject IConfiguration configuration
+
+<div class="row justify-content-center mt-5">
+	<div class="col-md-6">
+		<RadzenCard class="p-4">
+			<h3 class="text-center mb-4">Login Trichechus</h3>
+
+			<RadzenTabs>
+				<Tabs>
+					<RadzenTabsItem Text="Local">
+						<EditForm Model="@loginModel" OnValidSubmit="LoginLocal">
+							<DataAnnotationsValidator />
+							<ValidationSummary />
+
+							<div class="mb-3">
+								<RadzenLabel Text="Email" Component="email-local" />
+								<RadzenTextBox @bind-Value="loginModel.Email" Name="email-local" class="w-100" />
+								<ValidationMessage For="@(() => loginModel.Email)" />
+							</div>
+
+							<div class="mb-3">
+								<RadzenLabel Text="Senha" Component="senha-local" />
+								<RadzenPassword @bind-Value="loginModel.Senha" Name="senha-local" class="w-100" />
+								<ValidationMessage For="@(() => loginModel.Senha)" />
+							</div>
+
+							<div class="d-grid gap-2">
+								<RadzenButton ButtonType="ButtonType.Submit" Text="Login Local"
+									ButtonStyle="ButtonStyle.Primary" class="w-100" />
+							</div>
+						</EditForm>
+					</RadzenTabsItem>
+
+					<RadzenTabsItem Text="SGA">
+						<EditForm Model="@loginModel" OnValidSubmit="LoginSGA">
+							<DataAnnotationsValidator />
+							<ValidationSummary />
+
+							<div class="mb-3">
+								<RadzenLabel Text="Email" Component="email" />
+								<RadzenTextBox @bind-Value="loginModel.Email" Name="email" class="w-100" />
+								<ValidationMessage For="@(() => loginModel.Email)" />
+							</div>
+
+							<div class="mb-3">
+								<RadzenLabel Text="Senha" Component="senha" />
+								<RadzenPassword @bind-Value="loginModel.Senha" Name="senha" class="w-100" />
+								<ValidationMessage For="@(() => loginModel.Senha)" />
+							</div>
+
+							<div class="d-grid gap-2">
+								<RadzenButton ButtonType="ButtonType.Submit" Text="Login SGA"
+									ButtonStyle="ButtonStyle.Primary" class="w-100" />
+							</div>
+						</EditForm>
+					</RadzenTabsItem>
+				</Tabs>
+			</RadzenTabs>
+			
+			@if (!string.IsNullOrEmpty(errorMessage))
+			{
+				<div class="alert alert-danger mt-3">
+					@errorMessage
+				</div>
+			}
+		</RadzenCard>
+	</div>
+</div>
+
+@code {
+	private LoginRequestDto loginModel = new LoginRequestDto();
+	private string? errorMessage;
+
+	private async Task LoginLocal()
+	{
+		try
+		{
+			errorMessage = string.Empty;
+			var result = await AuthService.LoginLocalAsync(loginModel);
+			AuthStateProvider.NotifyUserAuthentication(result.Token!);
+			NavigationManager.NavigateTo("/");
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Erro ao fazer login local: {ex.Message}";
+		}
+	}
+
+	private async Task LoginSGA()
+	{
+		try
+		{
+			errorMessage = string.Empty;
+			var result = await AuthService.LoginSGAAsync(loginModel);
+			AuthStateProvider.NotifyUserAuthentication(result.Token!);
+			NavigationManager.NavigateTo("/");
+		}
+		catch (Exception ex)
+		{
+			errorMessage = $"Erro ao fazer login SGA: {ex.Message}";
+		}
+	}
+}

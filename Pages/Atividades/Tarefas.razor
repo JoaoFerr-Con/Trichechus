@@ -1,0 +1,186 @@
+@page "/tarefas"
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@using System.Security.Claims
+@attribute [Authorize]
+@inject TarefaService TarefaService
+@inject AtividadeService AtividadeService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Tarefas</PageTitle>
+
+<h1>Gerenciamento de Tarefas</h1>
+
+<div class="row mb-3">
+    <div class="col">
+        <RadzenButton Icon="add" Text="Nova Tarefa" ButtonStyle="ButtonStyle.Primary" Click="@OpenCreateDialog" />
+    </div>
+    <div class="col-md-6">
+        <RadzenTextBox Placeholder="Buscar tarefas..." @bind-Value="@searchString" Change="@OnSearch" class="w-100" />
+    </div>
+</div>
+
+<RadzenDataGrid @ref="tarefasGrid" Data="@tarefas" TItem="TarefaDto" AllowFiltering="true" 
+                AllowColumnResize="true" AllowAlternatingRows="true" FilterMode="FilterMode.Advanced" 
+                AllowSorting="true" PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" 
+                ShowPagingSummary="true" IsLoading="@isLoading">
+    <Columns>
+        <RadzenDataGridColumn TItem="TarefaDto" Property="Titulo" Title="Título" Width="200px" />
+        <RadzenDataGridColumn TItem="TarefaDto" Property="Descricao" Title="Descrição" Width="300px">
+            <Template Context="data">
+                @(data.Descricao?.Length > 50 ? data.Descricao.Substring(0, 50) + "..." : data.Descricao)
+            </Template>
+        </RadzenDataGridColumn>
+        <RadzenDataGridColumn TItem="TarefaDto" Property="Situacao" Title="Situação" Width="120px" />
+        <RadzenDataGridColumn TItem="TarefaDto" Property="NomeResponsavel" Title="Responsável" Width="150px" />
+        <RadzenDataGridColumn TItem="TarefaDto" Property="Prazo" Title="Prazo" Width="120px" FormatString="{0:dd/MM/yyyy}" />
+        <RadzenDataGridColumn TItem="TarefaDto" Title="Ações" Width="180px" TextAlign="TextAlign.Center">
+            <Template Context="tarefa">
+                <RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small" 
+                              Click="@(() => ViewDetails(tarefa))" Title="Visualizar" />
+                <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
+                              Click="@(() => OpenEditDialog(tarefa))" Title="Editar" />
+                <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                              Click="@(() => ConfirmDelete(tarefa))" Title="Excluir" />
+            </Template>
+        </RadzenDataGridColumn>
+    </Columns>
+</RadzenDataGrid>
+
+@code {
+    private IEnumerable<TarefaDto>? tarefas;
+    private IEnumerable<TarefaDto>? allTarefas;
+    private RadzenDataGrid<TarefaDto>? tarefasGrid;
+    private bool isLoading = true;
+    private string searchString = "";
+    private string? userName;
+    private IEnumerable<AtividadeDto>? atividades;
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity!.IsAuthenticated)
+        {
+            userName = user.FindFirst(ClaimTypes.Name)?.Value;
+        }
+        
+        await LoadTarefas();
+        await LoadAtividades();
+    }
+
+    private async Task LoadTarefas()
+    {
+        try
+        {
+            isLoading = true;
+            allTarefas = await TarefaService.GetAllTarefasAsync();
+            tarefas = allTarefas;
+            isLoading = false;
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao carregar tarefas: {ex.Message}");
+            isLoading = false;
+        }
+    }
+
+    private async Task LoadAtividades()
+    {
+        try
+        {
+            atividades = await AtividadeService.GetAllAtividadesAsync();
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao carregar atividades: {ex.Message}");
+        }
+    }
+
+    private void OnSearch(string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            tarefas = allTarefas;
+        }
+        else
+        {
+            tarefas = allTarefas!.Where(t => 
+                (t.Titulo?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (t.Descricao?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (t.NomeResponsavel?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+                (t.Situacao?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false)
+            );
+        }
+    }
+
+    private async Task OpenCreateDialog()
+    {
+        if (atividades == null || !atividades.Any())
+        {
+            NotificationService.Notify(NotificationSeverity.Warning, "Aviso", "É necessário ter pelo menos uma atividade cadastrada para criar uma tarefa.");
+            return;
+        }
+        
+        var parameters = new Dictionary<string, object>
+        {
+            { "Atividades", atividades },
+            { "UserName", userName! }
+        };
+        
+        var result = await DialogService.OpenAsync<NovaTarefaComAtividadeDialog>("Nova Tarefa", 
+            parameters,
+            new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+        
+        if (result != null)
+        {
+            await LoadTarefas();
+            NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Tarefa criada com sucesso!");
+        }
+    }
+
+    private async Task OpenEditDialog(TarefaDto tarefa)
+    {
+        var result = await DialogService.OpenAsync<EditarTarefaDialog>("Editar Tarefa", 
+            new Dictionary<string, object> { { "TarefaId", tarefa.Id } },
+            new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+        
+        if (result != null)
+        {
+            await LoadTarefas();
+            NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Tarefa atualizada com sucesso!");
+        }
+    }
+
+    private async Task ViewDetails(TarefaDto tarefa)
+    {
+        await DialogService.OpenAsync<DetalhesTarefaDialog>("Detalhes da Tarefa", 
+            new Dictionary<string, object> { { "TarefaId", tarefa.Id } },
+            new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+    }
+
+    private async Task ConfirmDelete(TarefaDto tarefa)
+    {
+        var result = await DialogService.Confirm(
+            $"Tem certeza que deseja excluir a tarefa '{tarefa.Titulo}'?",
+            "Confirmar Exclusão",
+            new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+        
+        if (result == true)
+        {
+            try
+            {
+                await TarefaService.DeleteTarefaAsync(tarefa.Id, tarefa);
+                await LoadTarefas();
+                NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Tarefa excluída com sucesso!");
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao excluir tarefa: {ex.Message}");
+            }
+        }
+    }
+}

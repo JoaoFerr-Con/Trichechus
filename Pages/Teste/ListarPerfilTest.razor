@@ -1,0 +1,51 @@
+@page "/listar-perfis-test"
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@inject PerfilService PerfilService
+@inject NotificationService NotificationService
+
+<h3>Teste de Listagem de Perfis</h3>
+
+<RadzenButton Text="Carregar Perfils" Click="@CarregarPerfils" Style="margin-bottom: 1rem;" />
+
+@if (Erro != null)
+{
+    <p style="color:red">@Erro</p>
+}
+else if (perfis?.Any() == true)
+{
+    <RadzenDataGrid Data="@perfis" TItem="PerfilDto" ColumnWidth="200px" ShowPagingSummary="true" PageSize="10"
+        Responsive="true">
+        <Columns>
+            <RadzenDataGridColumn TItem="PerfilDto" Property="Nome" Title="Nome" />
+            <RadzenDataGridColumn TItem="PerfilDto" Property="Descricao" Title="Descrição" />
+        </Columns>
+    </RadzenDataGrid>
+}
+else if (perfis != null)
+{
+    <p>Nenhuma perfil encontrada.</p>
+}
+
+@code {
+    private List<PerfilDto>? perfis;
+    private string? Erro;
+
+    private async Task CarregarPerfils()
+    {
+        Erro = null;
+        try
+        {
+            var resultado = await PerfilService.GetAllPerfilsAsync();
+            perfis = resultado.ToList();
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            Erro = $"Erro 401: Não autorizado. Detalhe: {ex.Message}";
+        }
+        catch (Exception ex)
+        {
+            Erro = $"Erro: {ex.Message}";
+        }
+    }
+}

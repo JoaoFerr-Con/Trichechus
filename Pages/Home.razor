@@ -1,0 +1,231 @@
+﻿@page "/"
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@using System.Security.Claims
+@attribute [Authorize]
+@inject AtividadeService AtividadeService
+@inject TarefaService TarefaService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Dashboard - Trichechus</PageTitle>
+
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <h1>Dashboard</h1>
+            <p>Bem-vindo ao sistema Trichechus, @userName!</p>
+        </div>
+    </div>
+
+    @if (isLoading)
+    {
+        <div class="row">
+            <div class="col-md-12 text-center">
+                <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" Style="width: 50%; margin: auto;" />
+                <p class="mt-3">Carregando dados...</p>
+            </div>
+        </div>
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-3">
+                <RadzenCard class="p-3 dashboard-card">
+                    <div class="d-flex align-items-center">
+                        <RadzenIcon Icon="assignment" Style="font-size: 2rem; color: var(--rz-primary);" />
+                        <div class="ms-3">
+                            <h5 class="mb-0">Total de Atividades</h5>
+                            <h2 class="mb-0">@totalAtividades</h2>
+                        </div>
+                    </div>
+                </RadzenCard>
+            </div>
+            <div class="col-md-3">
+                <RadzenCard class="p-3 dashboard-card">
+                    <div class="d-flex align-items-center">
+                        <RadzenIcon Icon="check_circle" Style="font-size: 2rem; color: var(--rz-success);" />
+                        <div class="ms-3">
+                            <h5 class="mb-0">Total de Tarefas</h5>
+                            <h2 class="mb-0">@totalTarefas</h2>
+                        </div>
+                    </div>
+                </RadzenCard>
+            </div>
+            <div class="col-md-3">
+                <RadzenCard class="p-3 dashboard-card">
+                    <div class="d-flex align-items-center">
+                        <RadzenIcon Icon="pending_actions" Style="font-size: 2rem; color: var(--rz-warning);" />
+                        <div class="ms-3">
+                            <h5 class="mb-0">Pendentes</h5>
+                            <h2 class="mb-0">@atividadesPendentes</h2>
+                        </div>
+                    </div>
+                </RadzenCard>
+            </div>
+            <div class="col-md-3">
+                <RadzenCard class="p-3 dashboard-card">
+                    <div class="d-flex align-items-center">
+                        <RadzenIcon Icon="done_all" Style="font-size: 2rem; color: var(--rz-info);" />
+                        <div class="ms-3">
+                            <h5 class="mb-0">Concluídas</h5>
+                            <h2 class="mb-0">@atividadesConcluidas</h2>
+                        </div>
+                    </div>
+                </RadzenCard>
+            </div>
+        </div>
+
+        <div class="row mb-4">
+            <div class="col-md-6">
+                <RadzenCard>
+                    <h4>Atividades por Situação</h4>
+                    <RadzenChart>
+                        <RadzenPieSeries Data="@atividadesPorSituacao" Title="Situação" CategoryProperty="Categoria" ValueProperty="Quantidade" />
+                        <RadzenLegend Position="LegendPosition.Bottom" />
+                    </RadzenChart>
+                </RadzenCard>
+            </div>
+            <div class="col-md-6">
+                <RadzenCard>
+                    <h4>Atividades Recentes</h4>
+                    @if (atividadesRecentes == null || !atividadesRecentes.Any())
+                    {
+                        <p>Nenhuma atividade recente encontrada.</p>
+                    }
+                    else
+                    {
+                        <RadzenDataList WrapItems="true" AllowPaging="false" Data="@atividadesRecentes" TItem="AtividadeDto">
+                            <Template Context="atividade">
+                                <RadzenCard class="mb-3">
+                                    <div class="d-flex justify-content-between align-items-center">
+                                        <div>
+                                            <h5 class="mb-0">@atividade.Titulo</h5>
+                                            <small>@atividade.CriadoEm.ToString("dd/MM/yyyy HH:mm")</small>
+                                        </div>
+                                        <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@atividade.Situacao" />
+                                    </div>
+                                    <p class="mt-2 mb-0">@(atividade.Descricao?.Length > 100 ? atividade.Descricao.Substring(0, 100) + "..." : atividade.Descricao)</p>
+                                </RadzenCard>
+                            </Template>
+                        </RadzenDataList>
+                    }
+                </RadzenCard>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-md-12">
+                <RadzenCard>
+                    <h4>Tarefas Próximas do Prazo</h4>
+                    @if (tarefasProximasDoPrazo == null || !tarefasProximasDoPrazo.Any())
+                    {
+                        <p>Nenhuma tarefa próxima do prazo encontrada.</p>
+                    }
+                    else
+                    {
+                        <RadzenDataGrid Data="@tarefasProximasDoPrazo" TItem="TarefaDto" AllowPaging="true" PageSize="5">
+                            <Columns>
+                                <RadzenDataGridColumn TItem="TarefaDto" Property="Titulo" Title="Título" />
+                                <RadzenDataGridColumn TItem="TarefaDto" Property="Situacao" Title="Situação" />
+                                <RadzenDataGridColumn TItem="TarefaDto" Property="Prazo" Title="Prazo" FormatString="{0:dd/MM/yyyy}" />
+                                <RadzenDataGridColumn TItem="TarefaDto" Title="Dias Restantes">
+                                    <Template Context="tarefa">
+                                        @{
+                                            var diasRestantes = tarefa.Prazo.HasValue ? (tarefa.Prazo.Value - DateTime.Now).Days : 0;
+                                            var cor = diasRestantes <= 0 ? BadgeStyle.Danger : diasRestantes <= 3 ? BadgeStyle.Warning : BadgeStyle.Success;
+                                        }
+                                        <RadzenBadge BadgeStyle="@cor" Text="@(diasRestantes <= 0 ? "Vencido" : $"{diasRestantes} dias")" />
+                                    </Template>
+                                </RadzenDataGridColumn>
+                            </Columns>
+                        </RadzenDataGrid>
+                    }
+                </RadzenCard>
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .dashboard-card {
+        transition: all 0.3s ease;
+    }
+    .dashboard-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+    }
+</style>
+
+@code {
+    private string? userName;
+    private bool isLoading = true;
+    private int totalAtividades;
+    private int totalTarefas;
+    private int atividadesPendentes;
+    private int atividadesConcluidas;
+    private IEnumerable<AtividadeDto>? atividadesRecentes;
+    private IEnumerable<TarefaDto>? tarefasProximasDoPrazo;
+    private List<ChartData> atividadesPorSituacao = new List<ChartData>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        var user = authState.User;
+        
+        if (user.Identity!.IsAuthenticated)
+        {
+            userName = user.FindFirst(ClaimTypes.Name)?.Value;
+        }
+        
+        await LoadDashboardData();
+    }
+
+    private async Task LoadDashboardData()
+    {
+        try
+        {
+            isLoading = true;
+            
+            // Carregar atividades
+            var atividades = await AtividadeService.GetAllAtividadesAsync();
+            totalAtividades = atividades.Count();
+            atividadesPendentes = atividades.Count(a => a.Situacao == "Pendente" || a.Situacao == "Em Andamento");
+            atividadesConcluidas = atividades.Count(a => a.Situacao == "Concluída");
+            
+            // Agrupar atividades por situação para o gráfico
+            var situacoes = atividades.GroupBy(a => a.Situacao ?? "Não definido")
+                                     .Select(g => new ChartData { Categoria = g.Key, Quantidade = g.Count() })
+                                     .ToList();
+            atividadesPorSituacao = situacoes;
+            
+            // Atividades recentes (últimas 5)
+            atividadesRecentes = atividades.OrderByDescending(a => a.CriadoEm).Take(5);
+            
+            // Carregar tarefas
+            var tarefas = await TarefaService.GetAllTarefasAsync();
+            totalTarefas = tarefas.Count();
+            
+            // Tarefas próximas do prazo (próximos 7 dias)
+            var hoje = DateTime.Now.Date;
+            var limite = hoje.AddDays(7);
+            tarefasProximasDoPrazo = tarefas.Where(t => t.Prazo.HasValue && 
+                                                      t.Prazo.Value.Date >= hoje && 
+                                                      t.Prazo.Value.Date <= limite &&
+                                                      t.Situacao != "Concluída")
+                                           .OrderBy(t => t.Prazo);
+            
+            isLoading = false;
+        }
+        catch (Exception)
+        {
+            isLoading = false;
+            // Tratar erro
+        }
+    }
+
+    public class ChartData
+    {
+        public string? Categoria { get; set; }
+        public int Quantidade { get; set; }
+}
+    }

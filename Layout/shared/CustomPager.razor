@@ -1,0 +1,69 @@
+@typeparam TItem
+
+<div class="d-flex justify-content-between align-items-center mt-3">
+    <div>
+        <RadzenDropDown @bind-Value="@InternalPageSize" Data="@PageSizeOptions" Change="@HandlePageSizeChange"
+            Style="width: 100px;" />
+        <span class="ms-2">itens por página</span>
+    </div>
+    
+    <div>
+        <span>Mostrando @StartItem - @EndItem de @TotalItems</span>
+    </div>
+    
+    <div>
+        <RadzenButton Icon="first_page" ButtonStyle="ButtonStyle.Light" Disabled="@(CurrentPage == 1)" Click="@(() => GoToPage(1))" />
+        <RadzenButton Icon="chevron_left" ButtonStyle="ButtonStyle.Light" Disabled="@(CurrentPage == 1)" Click="@(() => GoToPage(CurrentPage - 1))" />
+        
+        @for (int i = StartPage; i <= EndPage; i++)
+        {
+            var isCurrent = (i == CurrentPage);
+            <RadzenButton Text="@i.ToString()" ButtonStyle="@(isCurrent? ButtonStyle.Primary: ButtonStyle.Light)" Click="@(() => GoToPage(i))" />
+        }
+        
+        <RadzenButton Icon="chevron_right" ButtonStyle="ButtonStyle.Light" Disabled="@(CurrentPage == TotalPages)" Click="@(() => GoToPage(CurrentPage + 1))" />
+        <RadzenButton Icon="last_page" ButtonStyle="ButtonStyle.Light" Disabled="@(CurrentPage == TotalPages)" Click="@(() => GoToPage(TotalPages))" />
+    </div>
+
+</div>
+
+
+@code {
+    // Parâmetros de entrada
+    [Parameter] public int PageSize { get; set; } = 10;
+    [Parameter] public int CurrentPage { get; set; } = 1;
+    [Parameter] public int TotalItems { get; set; }
+    [Parameter] public EventCallback<int> OnPageChange { get; set; }
+    [Parameter] public EventCallback<int> OnPageSizeChange { get; set; }
+    
+    // Lista fixa de opções para escolha de tamanho de página
+    private int[] PageSizeOptions = new[] { 5, 10, 20, 50, 100 };
+    
+    // Internos para controle local
+    private int InternalPageSize;
+    private int TotalPages => (int)Math.Ceiling(TotalItems / (double)InternalPageSize);
+    private int StartItem => Math.Min((CurrentPage - 1) * InternalPageSize + 1, TotalItems);
+    private int EndItem => Math.Min(CurrentPage * InternalPageSize, TotalItems);
+
+    private int StartPage => Math.Max(1, CurrentPage - 2);
+    private int EndPage => Math.Min(TotalPages, StartPage + 4);
+
+    protected override void OnParametersSet()
+    {
+        InternalPageSize = PageSize;
+    }
+
+    private async Task GoToPage(int page)
+    {
+        if (page != CurrentPage && page > 0 && page <= TotalPages)
+        {
+            await OnPageChange.InvokeAsync(page);
+        }
+    }
+
+    private async Task HandlePageSizeChange(object value)
+    {
+        InternalPageSize = (int)value;
+        await OnPageSizeChange.InvokeAsync(InternalPageSize);
+    }
+}

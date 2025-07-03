@@ -1,0 +1,31 @@
+@typeparam TItem
+
+<RadzenCard class="mb-3 p-3">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h5 class="mb-0">Filtros</h5>
+        <div>
+            <RadzenButton Icon="filter_list" Text="Filtrar" ButtonStyle="ButtonStyle.Primary" Click="@ApplyFilters" class="me-2" />
+            <RadzenButton Icon="refresh" Text="Limpar" ButtonStyle="ButtonStyle.Light" Click="@ClearFilters" />
+        </div>
+    </div>
+    
+    <div class="row">
+        @FilterContent
+    </div>
+</RadzenCard>
+
+@code {
+    [Parameter] public RenderFragment? FilterContent { get; set; }
+    [Parameter] public EventCallback OnApplyFilters { get; set; }
+    [Parameter] public EventCallback OnClearFilters { get; set; }
+    
+    private async Task ApplyFilters()
+    {
+        await OnApplyFilters.InvokeAsync();
+    }
+    
+    private async Task ClearFilters()
+    {
+        await OnClearFilters.InvokeAsync();
+    }
+}

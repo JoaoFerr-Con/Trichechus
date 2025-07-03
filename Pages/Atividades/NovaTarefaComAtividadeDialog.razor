@@ -1,0 +1,106 @@
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@inject TarefaService TarefaService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<RadzenTemplateForm TItem="CreateTarefaDto" Data="@model" Submit="@OnSubmit">
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <RadzenFormField Text="Atividade" Variant="Variant.Filled">
+                <RadzenDropDown @bind-Value="@model.AtividadeId" Data="@Atividades" TextProperty="Titulo" ValueProperty="Id" class="w-100" />
+                <RadzenRequiredValidator Component="AtividadeId" Text="A atividade é obrigatória" />
+            </RadzenFormField>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <RadzenFormField Text="Título" Variant="Variant.Filled">
+                <RadzenTextBox @bind-Value="@model.Titulo" Name="Titulo" class="w-100" />
+                <RadzenRequiredValidator Component="Titulo" Text="O título é obrigatório" />
+            </RadzenFormField>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <RadzenFormField Text="Descrição" Variant="Variant.Filled">
+                <RadzenTextArea @bind-Value="@model.Descricao" Name="Descricao" class="w-100" Rows="3" />
+            </RadzenFormField>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <RadzenFormField Text="Situação" Variant="Variant.Filled">
+                <RadzenDropDown @bind-Value="@model.Situacao" Data="@situacoes" class="w-100" />
+            </RadzenFormField>
+        </div>
+        <div class="col-md-6 mb-3">
+            <RadzenFormField Text="Responsável" Variant="Variant.Filled">
+                <RadzenTextBox @bind-Value="@model.NomeResponsavel" Name="NomeResponsavel" class="w-100" />
+            </RadzenFormField>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-6 mb-3">
+            <RadzenFormField Text="Prazo" Variant="Variant.Filled">
+                <RadzenDatePicker @bind-Value="@model.Prazo" Name="Prazo" class="w-100" DateFormat="dd/MM/yyyy" />
+            </RadzenFormField>
+        </div>
+    </div>
+    
+    <div class="row">
+        <div class="col-md-12 mb-3">
+            <RadzenFormField Text="Observação" Variant="Variant.Filled">
+                <RadzenTextArea @bind-Value="@model.Observacao" Name="Observacao" class="w-100" Rows="3" />
+            </RadzenFormField>
+        </div>
+    </div>
+    
+    <div class="row mt-3">
+        <div class="col-md-12 d-flex justify-content-end">
+            <RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@Cancel" class="me-2" />
+            <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text="Salvar" />
+        </div>
+    </div>
+</RadzenTemplateForm>
+
+@code {
+    [Parameter] public IEnumerable<AtividadeDto>? Atividades { get; set; }
+    [Parameter] public string? UserName { get; set; }
+    
+    private CreateTarefaDto model = new CreateTarefaDto();
+    private IEnumerable<string> situacoes = new List<string> { "Pendente", "Em Andamento", "Concluída", "Cancelada" };
+    
+    protected override void OnInitialized()
+    {
+        model.NomeResponsavel = UserName;
+        model.Situacao = "Pendente";
+        
+        if (Atividades != null && Atividades.Any())
+        {
+            model.AtividadeId = Atividades.First().Id;
+        }
+    }
+    
+    private async Task OnSubmit()
+    {
+        try
+        {
+            await TarefaService.CreateTarefaAsync(model);
+            DialogService.Close(true);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao criar tarefa: {ex.Message}");
+        }
+    }
+    
+    private void Cancel()
+    {
+        DialogService.Close();
+    }
+}

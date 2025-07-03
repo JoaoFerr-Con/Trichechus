@@ -1,0 +1,74 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Trichechus.Frontend.Infrastructure.Services
+@inject NavigationManager NavigationManager
+@inject AuthStateProvider AuthStateProvider
+@inject IAuthService AuthService
+
+<RadzenPanelMenu>
+	<AuthorizeView>
+		<Authorizing>
+			<RadzenPanelMenuItem Text="Carregando..." Icon="hourglass_empty" />
+		</Authorizing>
+
+		<Authorized Context="mainAuth">
+			<RadzenPanelMenuItem Text="Dashboard" Icon="dashboard" Path="/" />
+			<RadzenPanelMenuItem Text="Atividades" Icon="assignment" Path="/atividades" />
+			<RadzenPanelMenuItem Text="Tarefas" Icon="check_circle" Path="/tarefas" />
+
+			<AuthorizeView Roles="GerenciarFuncionalidades,GerenciarPerfis,Admin">
+				<Authorized Context="adminAuth">
+					<RadzenPanelMenuItem Text="Administração" Icon="admin_panel_settings">
+						<AuthorizeView Roles="GerenciarFuncionalidades,Admin">
+							<Authorized Context="funcAuth">
+								<RadzenPanelMenuItem Text="Funcionalidades" Icon="extension" Path="/funcionalidades" />
+							</Authorized>
+						</AuthorizeView>
+						<AuthorizeView Roles="GerenciarPerfis,Admin">
+							<Authorized Context="perfilAuth">
+								<RadzenPanelMenuItem Text="Perfis" Icon="group" Path="/perfis" />
+							</Authorized>
+						</AuthorizeView>
+					</RadzenPanelMenuItem>
+				</Authorized>
+			</AuthorizeView>
+
+			<RadzenPanelMenuItem Text="Sair" Icon="logout" Click="@LogoutUser" />
+		</Authorized>
+		<NotAuthorized>
+			<RadzenPanelMenuItem Text="Login" Icon="login" Path="/login" />
+		</NotAuthorized>
+	</AuthorizeView>
+</RadzenPanelMenu>
+
+@code {
+	private async Task LogoutUser()
+	{
+		await AuthService.Logout();
+		@* var authStateProvider = (AuthStateProvider)AuthStateProvider;
+		await authStateProvider.GetAuthenticationStateAsync(); *@
+		AuthStateProvider.NotifyUserLogout();
+		NavigationManager.NavigateTo("/login");
+	}
+
+	protected override void OnInitialized()
+	{
+		NavigationManager.LocationChanged += LocationChanged!;
+		AuthStateProvider.AuthenticationStateChanged += OnAuthStateChanged!;
+	}
+
+	private void LocationChanged(object sender, LocationChangedEventArgs e)
+	{
+		StateHasChanged();
+	}
+
+	private void OnAuthStateChanged(Task<AuthenticationState> task)
+	{
+		InvokeAsync(StateHasChanged);
+	}
+
+	public void Dispose()
+	{
+		NavigationManager.LocationChanged -= LocationChanged!;
+		AuthStateProvider.AuthenticationStateChanged -= OnAuthStateChanged!;
+	}
+}

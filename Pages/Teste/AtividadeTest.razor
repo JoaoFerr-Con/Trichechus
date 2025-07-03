@@ -1,0 +1,50 @@
+@page "/atividade-test"
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@inject AtividadeService AtividadeService
+@inject NotificationService NotificationService
+
+<h3>Teste de Criação de Atividade</h3>
+
+<RadzenButton Text="Criar Atividade de Teste" Click="@TestCreateAtividade" />
+
+@if (!string.IsNullOrEmpty(ResultMessage))
+{
+	<p style="margin-top:10px; color: @(IsSuccess ? "green" : "red")">@ResultMessage</p>
+}
+
+@code {
+	private string ResultMessage = "";
+	private bool IsSuccess = false;
+
+	private async Task TestCreateAtividade()
+	{
+		try
+		{
+			var atividade = new CreateAtividadeDto
+			{
+				Titulo = "Teste de Criação",
+				Descricao = "Atividade gerada pelo teste manual",
+				Situacao = "Pendente",
+				NomeResponsavel = "TesteUser",
+				Prazo = DateTime.UtcNow.AddDays(7),
+				NomeEquipeResponsavel = "EquipeTeste",
+				TipoEntrada = "Manual"
+			};
+
+			var id = await AtividadeService.CreateAtividadeAsync(atividade);
+			ResultMessage = $"Atividade criada com sucesso! ID: {id}";
+			IsSuccess = true;
+		}
+		catch (UnauthorizedAccessException ex)
+		{
+			ResultMessage = $"Erro 401: Não autorizado. Verifique o token. Detalhe: {ex.Message}";
+			IsSuccess = false;
+		}
+		catch (Exception ex)
+		{
+			ResultMessage = $"Erro: {ex.Message}";
+			IsSuccess = false;
+		}
+	}
+}

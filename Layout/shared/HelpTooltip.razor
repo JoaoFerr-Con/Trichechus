@@ -1,0 +1,60 @@
+<div class="help-tooltip">
+    <RadzenIcon Icon="help_outline" Style="cursor: pointer; color: var(--rz-text-secondary-color);" @onclick="ToggleHelp" />
+    
+    @if (IsOpen)
+    {
+        <div class="help-content">
+            <div class="help-header">
+                <h5>@Title</h5>
+                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@ToggleHelp" />
+            </div>
+            <div class="help-body">
+                @HelpContent
+            </div>
+        </div>
+    }
+</div>
+
+<style>
+    .help-tooltip {
+        position: relative;
+        display: inline-block;
+    }
+    
+    .help-content {
+        position: absolute;
+        top: 100%;
+        right: 0;
+        width: 300px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        z-index: 1000;
+        margin-top: 10px;
+    }
+    
+    .help-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .help-body {
+        padding: 16px;
+        font-size: 14px;
+    }
+</style>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Ajuda";
+    [Parameter] public RenderFragment? HelpContent { get; set; }
+    
+    private bool IsOpen { get; set; }
+    
+    private void ToggleHelp()
+    {
+        IsOpen = !IsOpen;
+    }
+}

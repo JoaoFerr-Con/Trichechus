@@ -1,0 +1,70 @@
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@inject PerfilService PerfilService
+@inject AtividadeService AtividadeService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<div class="container">
+	@if (perfil == null)
+	{
+		<RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+	}
+	else
+	{
+		<div class="row mb-4">
+			<div class="col-md-12">
+				<h3>@perfil.Nome</h3>
+			</div>
+		</div>
+		
+		<div class="row mb-4">
+			<div class="col-md-12">
+				<RadzenCard>
+					<h5>Descrição</h5>
+					<p>@(string.IsNullOrEmpty(perfil.Descricao) ? "Sem descrição" : perfil.Descricao)</p>
+				</RadzenCard>
+			</div>
+		</div>
+ 
+	}
+	
+	<div class="row mt-4">
+		<div class="col-md-12 d-flex justify-content-end">
+			<RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Fechar" Click="@Close" />
+		</div>
+	</div>
+</div>
+
+@code {
+	[Parameter] public Guid PerfilId { get; set; }
+	
+	private PerfilDto? perfil;
+	
+	protected override async Task OnInitializedAsync()
+	{
+		await LoadPerfil();
+	}
+	
+	private async Task LoadPerfil()
+	{
+		try
+		{
+			perfil = await PerfilService.GetPerfilByIdAsync(PerfilId);
+			@* if (perfil != null)
+			{
+				atividade = await AtividadeService.GetAtividadeByIdAsync(perfil.AtividadeId);
+			} *@
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao carregar perfil: {ex.Message}");
+			Close();
+		}
+	}
+	
+	private void Close()
+	{
+		DialogService.Close();
+	}
+}

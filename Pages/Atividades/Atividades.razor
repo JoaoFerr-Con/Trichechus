@@ -1,0 +1,263 @@
+@page "/atividades"
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@using System.Security.Claims
+@using Trichechus.Frontend.Layout.shared;
+@attribute [Authorize]
+@inject AtividadeService AtividadeService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+@inject AuthenticationStateProvider AuthStateProvider
+
+<PageTitle>Atividades</PageTitle>
+
+<h1>Gerenciamento de Atividades</h1>
+
+<div class="row mb-3">
+	<div class="col">
+        <RadzenButton Icon="add" Text="Nova Atividade" ButtonStyle="ButtonStyle.Primary" Click="@OpenCreateDialog" />
+    </div>
+    <div class="col-md-4">
+        <RadzenTextBox Placeholder="Buscar atividades..." @bind-Value="@searchString" Change="@OnSearch" class="w-100" />
+    </div>
+    <div class="col-md-auto">
+        <ExportOptions TItem="AtividadeDto" Data="@atividades" FileName="atividades" Grid="@atividadesGrid" />
+    </div>
+</div>
+<AdvancedFilter TItem="AtividadeDto" OnApplyFilters="@ApplyFilters" OnClearFilters="@ClearFilters">
+    <FilterContent>
+        <div class="col-md-3 mb-2">
+            <RadzenFormField Text="Título" Variant="Variant.Filled">
+                <RadzenTextBox @bind-Value="@filtroTitulo" class="w-100" />
+            </RadzenFormField>
+        </div>
+        <div class="col-md-3 mb-2">
+            <RadzenFormField Text="Situação" Variant="Variant.Filled">
+                <RadzenDropDown @bind-Value="@filtroSituacao" Data="@situacoes" AllowClear="true" Placeholder="Todas" class="w-100" />
+            </RadzenFormField>
+        </div>
+        <div class="col-md-3 mb-2">
+            <RadzenFormField Text="Responsável" Variant="Variant.Filled">
+                <RadzenTextBox @bind-Value="@filtroResponsavel" class="w-100" />
+            </RadzenFormField>
+        </div>
+        <div class="col-md-3 mb-2">
+            <RadzenFormField Text="Prazo" Variant="Variant.Filled">
+                <RadzenDatePicker @bind-Value="@filtroPrazo" class="w-100" DateFormat="dd/MM/yyyy" />
+            </RadzenFormField>
+        </div>
+    </FilterContent>
+</AdvancedFilter>
+
+<RadzenDataGrid @ref="atividadesGrid" Data="@atividades" TItem="AtividadeDto" AllowFiltering="true"
+	AllowColumnResize="true" AllowAlternatingRows="true" FilterMode="FilterMode.Advanced" AllowSorting="true"
+	PageSize="10" AllowPaging="true" PagerHorizontalAlign="HorizontalAlign.Left" ShowPagingSummary="true"
+	IsLoading="@isLoading">
+	<Columns>
+		<RadzenDataGridColumn TItem="AtividadeDto" Property="Titulo" Title="Título" Width="200px" />
+		<RadzenDataGridColumn TItem="AtividadeDto" Property="Descricao" Title="Descrição" Width="300px">
+			<Template Context="data">
+				@(data.Descricao?.Length > 50 ? data.Descricao.Substring(0, 50) + "..." : data.Descricao)
+			</Template>
+		</RadzenDataGridColumn>
+		<RadzenDataGridColumn TItem="AtividadeDto" Property="Situacao" Title="Situação" Width="120px" />
+		<RadzenDataGridColumn TItem="AtividadeDto" Property="NomeResponsavel" Title="Responsável" Width="150px" />
+		<RadzenDataGridColumn TItem="AtividadeDto" Property="Prazo" Title="Prazo" Width="120px"
+			FormatString="{0:dd/MM/yyyy}" />
+		<RadzenDataGridColumn TItem="AtividadeDto" Property="Tarefas.Count" Title="Tarefas" Width="80px" />
+		<RadzenDataGridColumn TItem="AtividadeDto" Title="Ações" Width="180px" TextAlign="TextAlign.Center">
+			<Template Context="atividade">
+				<RadzenButton Icon="visibility" ButtonStyle="ButtonStyle.Info" Size="ButtonSize.Small"
+					Click="@(() => ViewDetails(atividade))" Title="Visualizar" />
+				<RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small"
+					Click="@(() => OpenEditDialog(atividade))" Title="Editar" />
+				<RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small"
+					Click="@(() => ConfirmDelete(atividade))" Title="Excluir" />
+			</Template>
+		</RadzenDataGridColumn>
+	</Columns>
+</RadzenDataGrid>
+
+@code {
+	private IEnumerable<AtividadeDto>? atividades;
+	private IEnumerable<AtividadeDto>? allAtividades;
+	private RadzenDataGrid<AtividadeDto>? atividadesGrid;
+	private bool isLoading = true;
+	private string searchString = "";
+	private string? userName;
+
+	private string? filtroTitulo;
+	private string? filtroSituacao;
+	private string? filtroResponsavel;
+	private DateTime? filtroPrazo;
+	private IEnumerable<string> situacoes = new List<string> { "Pendente", "Em Andamento", "Concluída", "Cancelada" };
+
+	private async Task ApplyFilters()
+	{
+		atividades = allAtividades;
+
+		if (!string.IsNullOrWhiteSpace(filtroTitulo))
+		{
+			atividades = atividades!.Where(a => a.Titulo.Contains(filtroTitulo, StringComparison.OrdinalIgnoreCase));
+		}
+
+		if (!string.IsNullOrWhiteSpace(filtroSituacao))
+		{
+			atividades = atividades!.Where(a => a.Situacao == filtroSituacao);
+		}
+
+		if (!string.IsNullOrWhiteSpace(filtroResponsavel))
+		{
+			atividades = atividades!.Where(a => a.NomeResponsavel?.Contains(filtroResponsavel, StringComparison.OrdinalIgnoreCase) ??
+			false);
+		}
+
+		if (filtroPrazo.HasValue)
+		{
+			atividades = atividades!.Where(a => a.Prazo.Date == filtroPrazo.Value.Date);
+		}
+		await Task.Delay(1);
+	}
+
+	private void ClearFilters()
+	{
+		filtroTitulo = null;
+		filtroSituacao = null;
+		filtroResponsavel = null;
+		filtroPrazo = null;
+
+		atividades = allAtividades;
+	}
+
+	protected override async Task OnInitializedAsync()
+	{
+		var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+		var user = authState.User;
+
+		if (user.Identity!.IsAuthenticated)
+		{
+			userName = user.FindFirst(ClaimTypes.Name)?.Value;
+		}
+
+		await LoadAtividades();
+	}
+
+	private async Task LoadAtividades()
+	{
+		try
+		{
+			isLoading = true;
+			allAtividades = await AtividadeService.GetAllAtividadesAsync();
+			atividades = allAtividades;
+			isLoading = false;
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao carregar atividades: {ex.Message}");
+			isLoading = false;
+		}
+	}
+
+	private void OnSearch(string value)
+	{
+		if (string.IsNullOrWhiteSpace(value))
+		{
+			atividades = allAtividades;
+		}
+		else
+		{
+			atividades = allAtividades!.Where(a =>
+			(a.Titulo?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+			(a.Descricao?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+			(a.NomeResponsavel?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false) ||
+			(a.Situacao?.Contains(value, StringComparison.OrdinalIgnoreCase) ?? false)
+			);
+		}
+	}
+
+	private async Task OpenCreateDialog()
+	{
+		var result = await DialogService.OpenAsync<NovaAtividadeDialog>("Nova Atividade",
+		new Dictionary<string, object> { { "UserName", userName! } },
+		new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+
+		if (result != null)
+		{
+			await LoadAtividades();
+			NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Atividade criada com sucesso!");
+		}
+	}
+
+	private async Task OpenEditDialog(AtividadeDto atividade)
+	{
+		var result = await DialogService.OpenAsync<EditarAtividadeDialog>("Editar Atividade",
+		new Dictionary<string, object> { { "AtividadeId", atividade.Id }, { "UserName", userName! } },
+		new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+
+		if (result != null)
+		{
+			await LoadAtividades();
+			NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Atividade atualizada com sucesso!");
+		}
+	}
+
+	private async Task ViewDetails(AtividadeDto atividade)
+	{
+		await DialogService.OpenAsync<DetalhesAtividadeDialog>("Detalhes da Atividade",
+		new Dictionary<string, object> { { "AtividadeId", atividade.Id } },
+		new DialogOptions { Width = "800px", Height = "650px", Resizable = true, Draggable = true });
+	}
+
+	@* private async Task ConfirmDelete(AtividadeDto atividade)
+	{
+		var result = await DialogService.Confirm(
+		$"Tem certeza que deseja excluir a atividade '{atividade.Titulo}'?",
+		"Confirmar Exclusão",
+		new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+
+		if (result == true)
+		{
+			try
+			{
+				await AtividadeService.DeleteAtividadeAsync(atividade.Id);
+				await LoadAtividades();
+				NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Atividade excluída com sucesso!");
+			}
+			catch (Exception ex)
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao excluir atividade: {ex.Message}");
+			}
+		}
+	} *@
+
+	private async Task ConfirmDelete(DeleteSoftAtividadeDto atividade)
+	{
+		var parameters = new Dictionary<string, object>
+		{
+			{ "Title", "Excluir Atividade" },
+			{ "Message", $"Tem certeza que deseja excluir a atividade '{atividade.Titulo}'? Esta ação não pode ser desfeita." },
+			{ "Icon", "delete_forever" },
+			{ "Color", "danger" },
+			{ "ConfirmText", "Excluir" },
+			{ "CancelText", "Cancelar" }
+		};
+
+		var result = await DialogService.OpenAsync<ConfirmDialog>("", parameters,
+		new DialogOptions { Width = "400px", Height = "300px", CloseDialogOnOverlayClick = true });
+
+		if (result == true)
+		{
+			try
+			{
+				await AtividadeService.DeleteAtividadeAsync(atividade.Id, atividade);
+				await LoadAtividades();
+				NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Atividade excluída com sucesso!");
+			}
+			catch (Exception ex)
+			{
+				NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao excluir atividade: {ex.Message}");
+			}
+		}
+	}
+
+}

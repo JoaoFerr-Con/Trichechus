@@ -1,0 +1,107 @@
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@inject TarefaService TarefaService
+@inject AtividadeService AtividadeService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<div class="container">
+    @if (tarefa == null)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h3>@tarefa.Titulo</h3>
+                <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@tarefa.Situacao" />
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <RadzenCard>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div><strong>Responsável:</strong> @tarefa.NomeResponsavel</div>
+                            <div><strong>Atividade:</strong> @(atividade?.Titulo ?? "Carregando...")</div>
+                        </div>
+                        <div class="col-md-6">
+                            @if (tarefa.Prazo.HasValue)
+                            {
+                                <div><strong>Prazo:</strong> @tarefa.Prazo.Value.ToString("dd/MM/yyyy")</div>
+                            }
+                            <div><strong>Criado em:</strong> @tarefa.CriadoEm.ToString("dd/MM/yyyy HH:mm")</div>
+                            @if (tarefa.AtualizadoEm.HasValue)
+                            {
+                                <div><strong>Atualizado em:</strong> @tarefa.AtualizadoEm.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                            }
+                        </div>
+                    </div>
+                </RadzenCard>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <RadzenCard>
+                    <h5>Descrição</h5>
+                    <p>@(string.IsNullOrEmpty(tarefa.Descricao) ? "Sem descrição" : tarefa.Descricao)</p>
+                </RadzenCard>
+            </div>
+        </div>
+        
+        @if (!string.IsNullOrEmpty(tarefa.Observacao))
+        {
+            <div class="row mb-4">
+                <div class="col-md-12">
+                    <RadzenCard>
+                        <h5>Observação</h5>
+                        <p>@tarefa.Observacao</p>
+                    </RadzenCard>
+                </div>
+            </div>
+        }
+    }
+    
+    <div class="row mt-4">
+        <div class="col-md-12 d-flex justify-content-end">
+            <RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Fechar" Click="@Close" />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid TarefaId { get; set; }
+    
+    private TarefaDto? tarefa;
+    private AtividadeDto? atividade;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadTarefa();
+    }
+    
+    private async Task LoadTarefa()
+    {
+        try
+        {
+            tarefa = await TarefaService.GetTarefaByIdAsync(TarefaId);
+            if (tarefa != null)
+            {
+                atividade = await AtividadeService.GetAtividadeByIdAsync(tarefa.AtividadeId);
+            }
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao carregar tarefa: {ex.Message}");
+            Close();
+        }
+    }
+    
+    private void Close()
+    {
+        DialogService.Close();
+    }
+}

@@ -1,0 +1,77 @@
+﻿@using Microsoft.AspNetCore.Components.Authorization
+@using Trichechus.Frontend.Infrastructure.Services
+@inject NavigationManager NavigationManager
+@inject AuthStateProvider AuthProvider
+@inject AuthenticationStateProvider AuthenticationStateProvider
+@inject IAuthService AuthService
+
+<RadzenPanelMenu>
+	<AuthorizeView>
+		<Authorized Context="mainAuth">
+			<RadzenPanelMenuItem Text="Dashboard" Icon="dashboard" Path="/" />
+			<RadzenPanelMenuItem Text="Atividades" Icon="assignment" Path="/atividades" />
+			<RadzenPanelMenuItem Text="Tarefas" Icon="check_circle" Path="/tarefas" />
+
+			<AuthorizeView Roles="T_LIS_PER, T_LIS_FUN">
+				<Authorized Context="adminAuth">
+					<RadzenPanelMenuItem Text="Administração" Icon="admin_panel_settings">
+						<AuthorizeView Roles="T_LIS_FUN">
+							<Authorized Context="funcAuth">
+								<RadzenPanelMenuItem Text="Funcionalidades" Icon="extension" Path="/funcionalidades" />
+							</Authorized>
+						</AuthorizeView>
+						<AuthorizeView Roles="T_LIS_PER">
+							<Authorized Context="perfilAuth">
+								<RadzenPanelMenuItem Text="Perfis" Icon="group" Path="/perfis" />
+							</Authorized>
+						</AuthorizeView>
+						<AuthorizeView Roles="T_LIS_PER">
+							<Authorized Context="testeAuth">
+								<RadzenPanelMenuItem Text="Teste Atividade" Icon="bug_report" Path="/atividade-test" />
+								<RadzenPanelMenuItem Text="Listar Atividades (Test)" Icon="list_alt" Path="/listar-atividades-test" />
+								<RadzenPanelMenuItem Text="Token Info (Test)" Icon="vpn_key" Path="/token-info-test" />
+							</Authorized>
+						</AuthorizeView>
+					</RadzenPanelMenuItem>
+				</Authorized>
+			</AuthorizeView>
+
+
+			<RadzenPanelMenuItem Text="Sair" Icon="logout" Click="@LogoutUser" />
+		</Authorized>
+		<NotAuthorized>
+			<RadzenPanelMenuItem Text="Login" Icon="login" Path="/login" />
+		</NotAuthorized>
+	</AuthorizeView>
+</RadzenPanelMenu>
+
+@code {
+	protected override void OnInitialized()
+	{
+		NavigationManager.LocationChanged += OnLocationChanged!;
+		AuthProvider.AuthenticationStateChanged += OnAuthStateChanged;
+	}
+
+	private void OnAuthStateChanged(Task<AuthenticationState> _)
+	{
+		InvokeAsync(StateHasChanged);
+	}
+
+	private void OnLocationChanged(object sender, LocationChangedEventArgs e)
+	{
+		StateHasChanged();
+	}
+
+	private async Task LogoutUser()
+	{
+		await AuthService.Logout();
+		AuthProvider.NotifyUserLogout();
+		NavigationManager.NavigateTo("/login", forceLoad: true);
+	}
+
+	public void Dispose()
+	{
+		NavigationManager.LocationChanged -= OnLocationChanged!;
+		AuthProvider.AuthenticationStateChanged -= OnAuthStateChanged;
+	}
+}

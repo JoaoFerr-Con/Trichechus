@@ -1,0 +1,92 @@
+﻿@inherits LayoutComponentBase
+@using Microsoft.AspNetCore.Components.Authorization
+@using Trichechus.Frontend.Layout.shared
+@using System.Security.Claims
+@using Trichechus.Frontend.Infrastructure.Services
+
+@inject AuthStateProvider AuthStateProvider
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+
+@inject IConfiguration configuration
+
+
+<RadzenDialog />
+<RadzenNotification />
+<RadzenTooltip />
+<RadzenContextMenu />
+
+<RadzenLayout>
+	<RadzenHeader>
+		<div class="d-flex align-items-center justify-content-between w-100 px-3">
+			<div class="d-flex align-items-center">
+				<RadzenSidebarToggle Click="@(() => sidebarExpanded = !sidebarExpanded)" />
+				<RadzenText Text="Trichechus" TextStyle="TextStyle.H5" class="ml-3" />
+			</div>
+			<AuthorizeView>
+				<Authorized>
+					<div class="d-flex align-items-center">
+						<NotificationCenter @ref="notificationCenter" />
+						<RadzenIcon Icon="account_circle" class="me-2" />
+						<div class="me-3">
+							<RadzenText TextStyle="TextStyle.Body1">@context.User.FindFirst(ClaimTypes.Name)?.Value
+							</RadzenText>
+							<RadzenText TextStyle="TextStyle.Caption">@context.User.FindFirst(ClaimTypes.Email)?.Value
+							</RadzenText>
+						</div>
+						<RadzenButton Icon="logout" Text="Sair" ButtonStyle="ButtonStyle.Light" Click="@LogoutUser" />
+					</div>
+				</Authorized>
+				<NotAuthorized>
+					<RadzenButton Icon="login" Text="Login" ButtonStyle="ButtonStyle.Primary"
+						Click="@(() => NavigationManager.NavigateTo("/login"))" />
+				</NotAuthorized>
+			</AuthorizeView>
+		</div>
+	</RadzenHeader>
+
+	<RadzenSidebar @bind-Expanded="@sidebarExpanded">
+		<NavMenu />
+	</RadzenSidebar>
+
+	<RadzenBody>
+		<div class="container-fluid">
+			@Body
+		</div>
+	</RadzenBody>
+
+	<RadzenFooter>
+		<div class="container-fluid d-flex justify-content-between">
+			<RadzenText TextStyle="TextStyle.Caption">Trichechus &copy; @DateTime.Now.Year</RadzenText>
+			<RadzenText TextStyle="TextStyle.Body1">
+				<strong>Environment: </strong>@configuration["Ambiente"]
+			</RadzenText>
+		</div>
+	</RadzenFooter>
+</RadzenLayout>
+
+
+@code {
+	private NotificationCenter? notificationCenter;
+
+	// Exemplo de como adicionar uma notificação
+	private void AddSampleNotification()
+	{
+		notificationCenter!.AddNotification(
+		"Nova atividade",
+		"Uma nova atividade foi criada: Reunião de planejamento",
+		"assignment",
+		"primary"
+		);
+	}
+	private bool sidebarExpanded = true;
+
+	private async Task LogoutUser()
+	{
+		await AuthService.Logout();
+		var authStateProvider = (AuthStateProvider)AuthStateProvider;
+		await authStateProvider.GetAuthenticationStateAsync();
+		authStateProvider.NotifyUserLogout();
+		NavigationManager.NavigateTo("/login");
+	}
+}

@@ -1,0 +1,79 @@
+@page "/register"
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@inject IAuthService AuthService
+@inject NavigationManager NavigationManager
+@inject AuthStateProvider AuthStateProvider
+
+<div class="row justify-content-center mt-5">
+    <div class="col-md-6">
+        <RadzenCard class="p-4">
+            <h3 class="text-center mb-4">Registro de Usuário Local</h3>
+            
+            <EditForm Model="@registerModel" OnValidSubmit="RegisterUser">
+                <DataAnnotationsValidator />
+                <ValidationSummary />
+
+                <div class="mb-3">
+                    <RadzenLabel Text="Nome" Component="nome" />
+                    <RadzenTextBox @bind-Value="registerModel.Nome" Name="nome" class="w-100" />
+                    <ValidationMessage For="@(() => registerModel.Nome)" />
+                </div>
+
+                <div class="mb-3">
+                    <RadzenLabel Text="Email" Component="email" />
+                    <RadzenTextBox @bind-Value="registerModel.Email" Name="email" class="w-100" />
+                    <ValidationMessage For="@(() => registerModel.Email)" />
+                </div>
+
+                <div class="mb-3">
+                    <RadzenLabel Text="Senha" Component="senha" />
+                    <RadzenPassword @bind-Value="registerModel.Senha" Name="senha" class="w-100" />
+                    <ValidationMessage For="@(() => registerModel.Senha)" />
+                </div>
+
+                <div class="mb-3">
+                    <RadzenLabel Text="Confirmar Senha" Component="confirmacaoSenha" />
+                    <RadzenPassword @bind-Value="registerModel.ConfirmacaoSenha" Name="confirmacaoSenha" class="w-100" />
+                    <ValidationMessage For="@(() => registerModel.ConfirmacaoSenha)" />
+                </div>
+
+                <div class="d-grid gap-2">
+                    <RadzenButton ButtonType="ButtonType.Submit" Text="Registrar" 
+                                  ButtonStyle="ButtonStyle.Primary" class="w-100" />
+                </div>
+            </EditForm>
+            
+            @if (!string.IsNullOrEmpty(errorMessage))
+            {
+                <div class="alert alert-danger mt-3">
+                    @errorMessage
+                </div>
+            }
+            
+            <div class="mt-3 text-center">
+                <RadzenLink Path="/login" Text="Já tem uma conta? Faça login" />
+            </div>
+        </RadzenCard>
+    </div>
+</div>
+
+@code {
+    private RegisterRequestDto registerModel = new RegisterRequestDto();
+    private string? errorMessage;
+
+    private async Task RegisterUser()
+    {
+        try
+        {
+            errorMessage = string.Empty;
+            var result = await AuthService.RegisterLocalAsync(registerModel);
+            AuthStateProvider.NotifyUserAuthentication(result.Token!);
+            NavigationManager.NavigateTo("/");
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"Erro ao registrar: {ex.Message}";
+        }
+    }
+}

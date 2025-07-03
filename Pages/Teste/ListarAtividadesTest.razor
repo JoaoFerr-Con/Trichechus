@@ -1,0 +1,54 @@
+@page "/listar-atividades-test"
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@inject AtividadeService AtividadeService
+@inject NotificationService NotificationService
+
+<h3>Teste de Listagem de Atividades</h3>
+
+<RadzenButton Text="Carregar Atividades" Click="@CarregarAtividades" Style="margin-bottom: 1rem;" />
+
+@if (Erro != null)
+{
+	<p style="color:red">@Erro</p>
+}
+else if (atividades?.Any() == true)
+{
+	<RadzenDataGrid Data="@atividades" TItem="AtividadeDto" ColumnWidth="200px" ShowPagingSummary="true" PageSize="10"
+		Responsive="true">
+		<Columns>
+			<RadzenDataGridColumn TItem="AtividadeDto" Property="Titulo" Title="Título" />
+			<RadzenDataGridColumn TItem="AtividadeDto" Property="Descricao" Title="Descrição" />
+			<RadzenDataGridColumn TItem="AtividadeDto" Property="NomeResponsavel" Title="Responsável" />
+			<RadzenDataGridColumn TItem="AtividadeDto" Property="Prazo" Title="Prazo" FormatString="{0:dd/MM/yyyy}" />
+			<RadzenDataGridColumn TItem="AtividadeDto" Property="Situacao" Title="Situação" />
+		</Columns>
+	</RadzenDataGrid>
+}
+else if (atividades != null)
+{
+	<p>Nenhuma atividade encontrada.</p>
+}
+
+@code {
+	private List<AtividadeDto>? atividades;
+	private string? Erro;
+
+	private async Task CarregarAtividades()
+	{
+		Erro = null;
+		try
+		{
+			var resultado = await AtividadeService.GetAllAtividadesAsync();
+			atividades = resultado.ToList();
+		}
+		catch (UnauthorizedAccessException ex)
+		{
+			Erro = $"Erro 401: Não autorizado. Detalhe: {ex.Message}";
+		}
+		catch (Exception ex)
+		{
+			Erro = $"Erro: {ex.Message}";
+		}
+	}
+}

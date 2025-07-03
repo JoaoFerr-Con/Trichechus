@@ -1,0 +1,181 @@
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@inject AtividadeService AtividadeService
+@inject TarefaService TarefaService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<div class="container">
+    @if (atividade == null)
+    {
+        <RadzenProgressBar Value="100" ShowValue="false" Mode="ProgressBarMode.Indeterminate" />
+    }
+    else
+    {
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <h3>@atividade.Titulo</h3>
+                <RadzenBadge BadgeStyle="BadgeStyle.Secondary" Text="@atividade.Situacao" />
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <RadzenCard>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div><strong>Responsável:</strong> @atividade.NomeResponsavel</div>
+                            <div><strong>Equipe:</strong> @atividade.NomeEquipeResponsavel</div>
+                            <div><strong>Tipo de Entrada:</strong> @atividade.TipoEntrada</div>
+                        </div>
+                        <div class="col-md-6">
+                            <div><strong>Prazo:</strong> @atividade.Prazo.ToString("dd/MM/yyyy")</div>
+                            <div><strong>Criado em:</strong> @atividade.CriadoEm.ToString("dd/MM/yyyy HH:mm")</div>
+                            @if (atividade.AtualizadoEm.HasValue)
+                            {
+                                <div><strong>Atualizado em:</strong> @atividade.AtualizadoEm.Value.ToString("dd/MM/yyyy HH:mm")</div>
+                            }
+                        </div>
+                    </div>
+                </RadzenCard>
+            </div>
+        </div>
+        
+        <div class="row mb-4">
+            <div class="col-md-12">
+                <RadzenCard>
+                    <h5>Descrição</h5>
+                    <p>@(string.IsNullOrEmpty(atividade.Descricao) ? "Sem descrição" : atividade.Descricao)</p>
+                </RadzenCard>
+            </div>
+        </div>
+        
+        <div class="row mb-3">
+            <div class="col-md-12">
+                <div class="d-flex justify-content-between align-items-center">
+                    <h5>Tarefas (@(atividade.Tarefas?.Count ?? 0))</h5>
+                    <RadzenButton Icon="add" Text="Nova Tarefa" ButtonStyle="ButtonStyle.Primary" Click="@OpenCreateTarefaDialog" />
+                </div>
+            </div>
+        </div>
+        
+        @if (atividade.Tarefas == null || !atividade.Tarefas.Any())
+        {
+            <div class="row">
+                <div class="col-md-12">
+                    <RadzenCard>
+                        <p class="text-center">Nenhuma tarefa cadastrada para esta atividade.</p>
+                    </RadzenCard>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="row">
+                <div class="col-md-12">
+                    <RadzenDataGrid Data="@atividade.Tarefas" TItem="TarefaDto" AllowFiltering="true" 
+                                    AllowColumnResize="true" AllowAlternatingRows="true" FilterMode="FilterMode.Advanced" 
+                                    AllowSorting="true" PageSize="5" AllowPaging="true">
+                        <Columns>
+                            <RadzenDataGridColumn TItem="TarefaDto" Property="Titulo" Title="Título" Width="200px" />
+                            <RadzenDataGridColumn TItem="TarefaDto" Property="Situacao" Title="Situação" Width="120px" />
+                            <RadzenDataGridColumn TItem="TarefaDto" Property="NomeResponsavel" Title="Responsável" Width="150px" />
+                            <RadzenDataGridColumn TItem="TarefaDto" Property="Prazo" Title="Prazo" Width="120px" FormatString="{0:dd/MM/yyyy}" />
+                            <RadzenDataGridColumn TItem="TarefaDto" Title="Ações" Width="120px" TextAlign="TextAlign.Center">
+                                <Template Context="tarefa">
+                                    <RadzenButton Icon="edit" ButtonStyle="ButtonStyle.Primary" Size="ButtonSize.Small" 
+                                                  Click="@(() => OpenEditTarefaDialog(tarefa))" Title="Editar" />
+                                    <RadzenButton Icon="delete" ButtonStyle="ButtonStyle.Danger" Size="ButtonSize.Small" 
+                                                  Click="@(() => ConfirmDeleteTarefa(tarefa))" Title="Excluir" />
+                                </Template>
+                            </RadzenDataGridColumn>
+                        </Columns>
+                    </RadzenDataGrid>
+                </div>
+            </div>
+        }
+    }
+    
+    <div class="row mt-4">
+        <div class="col-md-12 d-flex justify-content-end">
+            <RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Fechar" Click="@Close" />
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter] public Guid AtividadeId { get; set; }
+    
+    private AtividadeDto? atividade;
+    
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadAtividade();
+    }
+    
+    private async Task LoadAtividade()
+    {
+        try
+        {
+            atividade = await AtividadeService.GetAtividadeByIdAsync(AtividadeId);
+        }
+        catch (Exception ex)
+        {
+            NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao carregar atividade: {ex.Message}");
+            Close();
+        }
+    }
+    
+    private async Task OpenCreateTarefaDialog()
+    {
+        var result = await DialogService.OpenAsync<NovaTarefaDialog>("Nova Tarefa", 
+            new Dictionary<string, object> { { "AtividadeId", AtividadeId } },
+            new DialogOptions { Width = "700px", Height = "500px", Resizable = true, Draggable = true });
+        
+        if (result != null)
+        {
+            await LoadAtividade();
+            NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Tarefa criada com sucesso!");
+        }
+    }
+    
+    private async Task OpenEditTarefaDialog(TarefaDto tarefa)
+    {
+        var result = await DialogService.OpenAsync<EditarTarefaDialog>("Editar Tarefa", 
+            new Dictionary<string, object> { { "TarefaId", tarefa.Id } },
+            new DialogOptions { Width = "700px", Height = "500px", Resizable = true, Draggable = true });
+        
+        if (result != null)
+        {
+            await LoadAtividade();
+            NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Tarefa atualizada com sucesso!");
+        }
+    }
+    
+    private async Task ConfirmDeleteTarefa(DeleteSoftTarefaDto tarefa)
+    {
+        var result = await DialogService.Confirm(
+            $"Tem certeza que deseja excluir a tarefa '{tarefa.Titulo}'?",
+            "Confirmar Exclusão",
+            new ConfirmOptions { OkButtonText = "Sim", CancelButtonText = "Não" });
+        
+        if (result == true)
+        {
+            try
+            {
+                await TarefaService.DeleteTarefaAsync(tarefa.Id, tarefa);
+                await LoadAtividade();
+                NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Tarefa excluída com sucesso!");
+            }
+            catch (Exception ex)
+            {
+                NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao excluir tarefa: {ex.Message}");
+            }
+        }
+    }
+    
+    private void Close()
+    {
+        DialogService.Close();
+    }
+}

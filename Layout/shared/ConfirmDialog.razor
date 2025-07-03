@@ -1,0 +1,46 @@
+@inject DialogService DialogService
+
+<div class="confirmation-dialog">
+    <div class="icon-container mb-3">
+        <RadzenIcon Icon="@Icon" Style="@IconStyle" />
+    </div>
+    
+    <h3>@Title</h3>
+    <p>@Message</p>
+    
+    <div class="d-flex justify-content-center mt-4">
+        <RadzenButton Text="@CancelText" ButtonStyle="ButtonStyle.Light" Click="@OnCancel" class="me-2" />
+        <RadzenButton Text="@ConfirmText" ButtonStyle="ButtonStyle.Danger" Click="@OnConfirm" />
+    </div>
+</div>
+
+<style>
+    .confirmation-dialog {
+        text-align: center;
+        padding: 1rem;
+    }
+    
+    .icon-container {
+        display: flex;
+        justify-content: center;
+    }
+</style>
+
+@code {
+    [Parameter] public string Title { get; set; } = "Confirmação";
+    [Parameter] public string Message { get; set; } = "Tem certeza que deseja realizar esta ação?";
+    [Parameter] public string Icon { get; set; } = "help";
+    [Parameter] public string Color { get; set; } = "warning";
+    [Parameter] public string ConfirmText { get; set; } = "Confirmar";
+    [Parameter] public string CancelText { get; set; } = "Cancelar";
+    private string IconStyle => $"font-size: 3rem; color: var(--rz-{Color});";
+    private void OnConfirm()
+    {
+        DialogService.Close(true);
+    }
+    
+    private void OnCancel()
+    {
+        DialogService.Close(false);
+    }
+}

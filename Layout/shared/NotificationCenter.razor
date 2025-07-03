@@ -1,0 +1,203 @@
+@inject IJSRuntime JSRuntime
+
+<div class="notification-icon" @onclick="ToggleNotifications">
+    <RadzenIcon Icon="notifications" />
+    @if (Notifications.Any())
+    {
+        <span class="notification-badge">@Notifications.Count</span>
+    }
+</div>
+
+@if (IsOpen)
+{
+    <div class="notification-panel">
+        <div class="notification-header">
+            <h5>Notificações</h5>
+            <div>
+                <RadzenButton Icon="done_all" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@MarkAllAsRead" />
+                <RadzenButton Icon="close" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@ToggleNotifications" />
+            </div>
+        </div>
+        
+        <div class="notification-list">
+            @if (!Notifications.Any())
+            {
+                <div class="notification-empty">
+                    <RadzenIcon Icon="notifications_none" Style="font-size: 3rem; color: var(--rz-text-disabled-color);" />
+                    <p>Nenhuma notificação</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var notification in Notifications.OrderByDescending(n => n.Date))
+                {
+                    <div class="notification-item @(notification.IsRead ? "read" : "")">
+                        <div class="notification-icon">
+                            <RadzenIcon Icon="@notification.Icon" Style="@IconStyle" />
+                        </div>
+                        <div class="notification-content">
+                            <div class="notification-title">@notification.Title</div>
+                            <div class="notification-message">@notification.Message</div>
+                            <div class="notification-date">@notification.Date.ToString("dd/MM/yyyy HH:mm")</div>
+                        </div>
+                        <div class="notification-actions">
+                            <RadzenButton Icon="done" ButtonStyle="ButtonStyle.Light" Size="ButtonSize.Small" Click="@(() => MarkAsRead(notification))" />
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+    </div>
+}
+
+<style>
+    .notification-icon {
+        position: relative;
+        cursor: pointer;
+        padding: 8px;
+    }
+    
+    .notification-badge {
+        position: absolute;
+        top: 0;
+        right: 0;
+        background-color: var(--rz-danger);
+        color: white;
+        border-radius: 50%;
+        width: 18px;
+        height: 18px;
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .notification-panel {
+        position: absolute;
+        top: 60px;
+        right: 20px;
+        width: 350px;
+        background-color: white;
+        border-radius: 8px;
+        box-shadow: 0 5px 20px rgba(0,0,0,0.1);
+        z-index: 1000;
+    }
+    
+    .notification-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 12px 16px;
+        border-bottom: 1px solid #eee;
+    }
+    
+    .notification-list {
+        max-height: 400px;
+        overflow-y: auto;
+    }
+    
+    .notification-item {
+        display: flex;
+        padding: 12px 16px;
+        border-bottom: 1px solid #eee;
+        transition: background-color 0.2s ease;
+    }
+    
+    .notification-item:hover {
+        background-color: #f9f9f9;
+    }
+    
+    .notification-item.read {
+        opacity: 0.7;
+    }
+    
+    .notification-item .notification-icon {
+        margin-right: 12px;
+    }
+    
+    .notification-item .notification-content {
+        flex: 1;
+    }
+    
+    .notification-item .notification-title {
+        font-weight: bold;
+    }
+    
+    .notification-item .notification-message {
+        font-size: 14px;
+    }
+    
+    .notification-item .notification-date {
+        font-size: 12px;
+        color: var(--rz-text-secondary-color);
+        margin-top: 4px;
+    }
+    
+    .notification-item .notification-actions {
+        display: flex;
+        align-items: center;
+    }
+    
+    .notification-empty {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        padding: 40px 0;
+        color: var(--rz-text-secondary-color);
+    }
+</style>
+
+@code {
+    private bool IsOpen { get; set; }
+    private string IconStyle => $"color: var(--rz-@notification.Color);";
+    public List<NotificationItem> Notifications { get; set; } = new List<NotificationItem>();
+    
+    private void ToggleNotifications()
+    {
+        IsOpen = !IsOpen;
+    }
+    
+    public void AddNotification(string title, string message, string icon = "notifications", string color = "primary")
+    {
+        var notification = new NotificationItem
+        {
+            Id = Guid.NewGuid(),
+            Title = title,
+            Message = message,
+            Date = DateTime.Now,
+            Icon = icon,
+            Color = color,
+            IsRead = false
+        };
+        
+        Notifications.Add(notification);
+        StateHasChanged();
+    }
+    
+    private void MarkAsRead(NotificationItem notification)
+    {
+        notification.IsRead = true;
+        StateHasChanged();
+    }
+    
+    private void MarkAllAsRead()
+    {
+        foreach (var notification in Notifications)
+        {
+            notification.IsRead = true;
+        }
+        StateHasChanged();
+    }
+    
+    public class NotificationItem
+    {
+        public Guid Id { get; set; }
+        public string? Title { get; set; }
+        public string? Message { get; set; }
+        public DateTime Date { get; set; }
+        public string? Icon { get; set; }
+        public string? Color { get; set; }
+        public bool IsRead { get; set; }
+    }
+}

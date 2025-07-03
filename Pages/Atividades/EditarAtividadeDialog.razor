@@ -1,0 +1,148 @@
+@using Trichechus.Frontend.Infrastructure.Services
+@using Trichechus.Frontend.Shared.DTOs
+@inject Radzen.DialogService DialogService
+
+@inject HttpClient Http
+@inject AtividadeService AtividadeService
+@inject DialogService DialogService
+@inject NotificationService NotificationService
+
+<RadzenTemplateForm TItem="UpdateAtividadeDto" Data="@model" Submit="@SalvarAtividade">
+	<div class="row">
+		<div class="col-md-12 mb-3">
+			<RadzenFormField Text="Título" Variant="Variant.Filled">
+				<RadzenTextBox @bind-Value="@model.Titulo" Name="Titulo" class="w-100" />
+				<RadzenRequiredValidator Component="Titulo" Text="O título é obrigatório" />
+			</RadzenFormField>
+		</div>
+	</div>
+	
+	<div class="row">
+		<div class="col-md-12 mb-3">
+			<RadzenFormField Text="Descrição" Variant="Variant.Filled">
+				<RadzenTextArea @bind-Value="@model.Descricao" Name="Descricao" class="w-100" Rows="5" />
+			</RadzenFormField>
+		</div>
+	</div>
+	
+	<div class="row">
+		<div class="col-md-6 mb-3">
+			<RadzenFormField Text="Situação" Variant="Variant.Filled">
+				<RadzenDropDown @bind-Value="@model.Situacao" Data="@situacoes" class="w-100" />
+			</RadzenFormField>
+		</div>
+		<div class="col-md-6 mb-3">
+			<RadzenFormField Text="Responsável" Variant="Variant.Filled">
+				<RadzenTextBox @bind-Value="@model.NomeResponsavel" Name="NomeResponsavel" class="w-100" />
+			</RadzenFormField>
+		</div>
+	</div>
+	
+	<div class="row">
+		<div class="col-md-6 mb-3">
+			<RadzenFormField Text="Prazo" Variant="Variant.Filled">
+				<RadzenDatePicker @bind-Value="@model.Prazo" Name="Prazo" class="w-100" DateFormat="dd/MM/yyyy" />
+				<RadzenRequiredValidator Component="Prazo" Text="O prazo é obrigatório" />
+			</RadzenFormField>
+		</div>
+		<div class="col-md-6 mb-3">
+			<RadzenFormField Text="Equipe Responsável" Variant="Variant.Filled">
+				<RadzenTextBox @bind-Value="@model.NomeEquipeResponsavel" Name="NomeEquipeResponsavel" class="w-100" />
+			</RadzenFormField>
+		</div>
+	</div>
+	
+	<div class="row">
+		<div class="col-md-6 mb-3">
+			<RadzenFormField Text="Tipo de Entrada" Variant="Variant.Filled">
+				<RadzenDropDown @bind-Value="@model.TipoEntrada" Data="@tiposEntrada" class="w-100" />
+			</RadzenFormField>
+		</div>
+	</div>
+	
+	<div class="row mt-3">
+		<div class="col-md-12 d-flex justify-content-end">
+			<RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@Cancel" class="me-2" />
+			<RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text="Salvar" />
+		</div>
+	</div>
+</RadzenTemplateForm>
+
+@code {
+	[Parameter] public Guid AtividadeId { get; set; }
+	[Parameter] public string? UserName { get; set; }
+	
+	private UpdateAtividadeDto model = new UpdateAtividadeDto();
+	private IEnumerable<string> situacoes = new List<string> { "Pendente", "Em Andamento", "Concluída", "Cancelada" };
+	private IEnumerable<string> tiposEntrada = new List<string> { "Manual", "Importação", "Sistema" };
+	
+	protected override async Task OnInitializedAsync()
+	{
+		try
+		{
+			var atividade = await AtividadeService.GetAtividadeByIdAsync(AtividadeId);
+			model.Id = AtividadeId;
+			model.Titulo = atividade.Titulo;
+			model.Descricao = atividade.Descricao;
+			model.Situacao = atividade.Situacao;
+			model.NomeResponsavel = atividade.NomeResponsavel;
+			model.Prazo = atividade.Prazo;
+			model.NomeEquipeResponsavel = atividade.NomeEquipeResponsavel;
+			model.TipoEntrada = atividade.TipoEntrada;
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao carregar atividade: {ex.Message}");
+			DialogService.Close();
+		}
+	}
+	
+	private async Task OnSubmit()
+	{
+		try
+		{
+			await AtividadeService.UpdateAtividadeAsync(AtividadeId, model);
+			DialogService.Close(true);
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao atualizar atividade: {ex.Message}");
+		}
+	}
+	
+	private void Cancel()
+	{
+		DialogService.Close();
+	}
+	
+	private async Task SalvarAtividade()
+	{
+		try
+		{
+			var response = await Http.PutAsJsonAsync($"api/atividades/{AtividadeId}", model);
+
+			if (!response.IsSuccessStatusCode)
+			{
+				var content = await response.Content.ReadAsStringAsync();
+				var mensagemErro = ErrorFormatter.FormatApiProblemDetails(content);
+
+				await DialogService.OpenAsync("Erro ao salvar", ds =>
+				@<div style="white-space:pre-wrap">@mensagemErro</div>,
+				new Radzen.DialogOptions { Width = "600px", CloseDialogOnOverlayClick = true }
+			);
+
+				return;
+			}
+
+			DialogService.Close(true); // ou redirecionar, ou notificar sucesso
+		}
+		catch (Exception ex)
+		{
+			await DialogService.OpenAsync("Erro inesperado", ds =>
+			@<div>@ex.Message</div>,
+			new Radzen.DialogOptions { Width = "600px" }
+		);
+		}
+	}
+
+}
