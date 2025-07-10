@@ -26,10 +26,10 @@ public class UpdatePerfilDto
 	public string? Descricao { get; set; }
 }
 
-public class DeleteSoftPerfilDto
-{
-	public Guid Id { get; set; }
-	public string Nome { get; set; } = default!;
+// public class DeleteSoftPerfilDto
+// {
+// 	public Guid Id { get; set; }
+// 	public string Nome { get; set; } = default!;
 
-}
+// }
 

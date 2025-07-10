@@ -5,49 +5,51 @@
 @inject NotificationService NotificationService
 
 <RadzenTemplateForm TItem="CreatePerfilDto" Data="@model" Submit="@OnSubmit">
-    <div class="row">
-        <div class="col-md-12 mb-3">
-            <RadzenFormField Text="Nome" Variant="Variant.Filled">
-                <RadzenTextBox @bind-Value="@model.Nome" Name="Nome" class="w-100" />
-                <RadzenRequiredValidator Component="Nome" Text="O Nome é obrigatório" />
-            </RadzenFormField>
-        </div>
-    </div>
-    
-    <div class="row">
-        <div class="col-md-12 mb-3">
-            <RadzenFormField Text="Descrição" Variant="Variant.Filled">
-                <RadzenTextArea @bind-Value="@model.Descricao" Name="Descricao" class="w-100" Rows="3" />
-            </RadzenFormField>
-        </div>
-    </div>
-    
-    <div class="row mt-3">
-        <div class="col-md-12 d-flex justify-content-end">
-            <RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@Cancel" class="me-2" />
-            <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text="Salvar" />
-        </div>
-    </div>
+	<RadzenRow>
+		<RadzenColumn Size="12">
+			<RadzenCard>
+				<RadzenStack Orientation="Orientation.Vertical" Gap="10px">
+
+					<RadzenText TextStyle="TextStyle.Subtitle2">Nome</RadzenText>
+					<RadzenTextBox @bind-Value="@model.Nome" Name="Nome" Style="width: 100%" aria-label="Nome"/>
+					<RadzenRequiredValidator Component="Nome" Text="O Nome é obrigatório" />
+					
+					<RadzenText TextStyle="TextStyle.Subtitle2">Descrição</RadzenText>
+					<RadzenTextArea @bind-Value="@model.Descricao" Name="Descricao" Style="width: 100%" aria-label="Descrição" />
+
+				</RadzenStack>
+			</RadzenCard>
+
+		</RadzenColumn>
+	</RadzenRow>
+
+	<div class="row mt-3">
+		<div class="col-md-12 d-flex justify-content-end">
+			<RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@Cancel"
+				class="me-2" />
+			<RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text="Salvar" />
+		</div>
+	</div>
 </RadzenTemplateForm>
 
 @code {
-    private CreatePerfilDto model = new CreatePerfilDto();
-    
-    private async Task OnSubmit()
-    {
-        try
-        {
-            await PerfilService.CreatePerfilAsync(model);
-            DialogService.Close(true);
-        }
-        catch (Exception ex)
-        {
-            NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao criar perfil: {ex.Message}");
-        }
-    }
-    
-    private void Cancel()
-    {
-        DialogService.Close();
-    }
+	private CreatePerfilDto model = new CreatePerfilDto();
+
+	private async Task OnSubmit()
+	{
+		try
+		{
+			await PerfilService.CreatePerfilAsync(model);
+			DialogService.Close(true);
+		}
+		catch (Exception ex)
+		{
+			NotificationService.Notify(NotificationSeverity.Error, "Erro", $"Erro ao criar perfil: {ex.Message}");
+		}
+	}
+
+	private void Cancel()
+	{
+		DialogService.Close();
+	}
 }

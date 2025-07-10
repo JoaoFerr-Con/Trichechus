@@ -33,9 +33,9 @@ public class AtividadeService
 		await _httpService.PutAsync<object>($"{_baseUrl}/{id}", atividade);
 	}
 
-	public async Task DeleteAtividadeAsync(Guid id, DeleteSoftAtividadeDto atividade)
+	public async Task DeleteAtividadeAsync(Guid id)
 	{
-		await _httpService.DeleteAsync($"{_baseUrl}/{id}", atividade);
+		await _httpService.DeleteAsync($"{_baseUrl}/{id}");
 	}
 
 }

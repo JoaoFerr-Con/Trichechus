@@ -1,5 +1,10 @@
 /.vscode
-/App_old.razor
 /bin
 /obj
 /Properties
+/App_old.razor
+/Layout/MainLayout_old.razor
+/Layout/MainLayout_old.razor.css
+/Layout/NavMenu copy.razor
+/Layout/NavMenu_old.razor
+/Layout/NavMenu_old.razor.css

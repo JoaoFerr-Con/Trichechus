@@ -152,7 +152,7 @@
         }
     }
     
-    private async Task ConfirmDeleteTarefa(DeleteSoftTarefaDto tarefa)
+    private async Task ConfirmDeleteTarefa(TarefaDto tarefa)
     {
         var result = await DialogService.Confirm(
             $"Tem certeza que deseja excluir a tarefa '{tarefa.Titulo}'?",
@@ -163,7 +163,7 @@
         {
             try
             {
-                await TarefaService.DeleteTarefaAsync(tarefa.Id, tarefa);
+                await TarefaService.DeleteTarefaAsync(tarefa.Id);
                 await LoadAtividade();
                 NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Tarefa excluída com sucesso!");
             }

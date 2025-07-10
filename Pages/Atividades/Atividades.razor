@@ -230,7 +230,7 @@
 		}
 	} *@
 
-	private async Task ConfirmDelete(DeleteSoftAtividadeDto atividade)
+	private async Task ConfirmDelete(AtividadeDto atividade)
 	{
 		var parameters = new Dictionary<string, object>
 		{
@@ -249,7 +249,7 @@
 		{
 			try
 			{
-				await AtividadeService.DeleteAtividadeAsync(atividade.Id, atividade);
+				await AtividadeService.DeleteAtividadeAsync(atividade.Id);
 				await LoadAtividades();
 				NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Atividade excluída com sucesso!");
 			}

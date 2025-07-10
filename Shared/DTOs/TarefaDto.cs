@@ -68,9 +68,9 @@ public class UpdateTarefaDto
 	public string? Observacao { get; set; }
 }
 
-public class DeleteSoftTarefaDto
-{
-	public Guid Id { get; set; }
-	public string Titulo { get; set; } = string.Empty;
-	public DateTime? DeletadoEm { get; set; } = DateTime.UtcNow;
-}
+// public class DeleteSoftTarefaDto
+// {
+// 	public Guid Id { get; set; }
+// 	public string Titulo { get; set; } = string.Empty;
+// 	public DateTime? DeletadoEm { get; set; } = DateTime.UtcNow;
+// }

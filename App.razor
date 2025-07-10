@@ -34,22 +34,6 @@
 	<LoadingScreen IsVisible="@IsLoading" Message="@LoadingMessage" />
 </CascadingValue>
 
-@* <CascadingValue Value="this">
-	<CascadingAuthenticationState>
-		<ErrorBoundary>
-			<Router AppAssembly="@typeof(App).Assembly">
-				<!-- ... -->
-			</Router>
-		</ErrorBoundary>
-	</CascadingAuthenticationState>
-	
-	<LoadingScreen IsVisible="@IsLoading" Message="@LoadingMessage" />
-</CascadingValue> *@
-
-
-
-
-
 @code {
 	public bool IsLoading { get; private set; }
 	public string? LoadingMessage { get; private set; }

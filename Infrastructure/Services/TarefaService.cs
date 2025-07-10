@@ -43,9 +43,9 @@ namespace Trichechus.Frontend.Infrastructure.Services
 			await _httpService.PutAsync<object>($"{_baseUrl}/{id}", tarefa);
 		}
 
-		public async Task DeleteTarefaAsync(Guid id, DeleteSoftTarefaDto tarefa)
+		public async Task DeleteTarefaAsync(Guid id)
 		{
-			await _httpService.DeleteAsync($"{_baseUrl}/{id}", tarefa);
+			await _httpService.DeleteAsync($"{_baseUrl}/{id}");
 		}
 	}
 }

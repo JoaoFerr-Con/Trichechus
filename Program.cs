@@ -42,7 +42,6 @@ builder.Services.AddScoped(sp =>
 	};
 });
 
-
 builder.Services.AddScoped<HttpService>();
 builder.Services.AddScoped<IAuthService, AuthService>();
 
@@ -53,9 +52,11 @@ builder.Services.AddScoped<AuthenticationStateProvider, AuthStateProvider>();
 builder.Services.AddScoped<AtividadeService>();
 builder.Services.AddScoped<TarefaService>();
 builder.Services.AddScoped<PerfilService>();
+
 builder.Services.AddScoped<AppNotificationService>();
 
 builder.Services.AddScoped<DialogService>();
+
 builder.Services.AddScoped<NotificationService>();
 builder.Services.AddScoped<TooltipService>();
 builder.Services.AddScoped<ContextMenuService>();

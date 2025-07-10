@@ -37,9 +37,9 @@ namespace Trichechus.Frontend.Infrastructure.Services
 			await _httpService.PutAsync<object>($"{_baseUrl}/{id}", perfil);
 		}
 
-		public async Task DeletePerfilAsync(Guid id, DeleteSoftPerfilDto perfil)
+		public async Task DeletePerfilAsync(Guid id)
 		{
-			await _httpService.DeleteAsync($"{_baseUrl}/{id}", perfil);
+			await _httpService.DeleteAsync($"{_baseUrl}/{id}");
 		}
 	}
 }

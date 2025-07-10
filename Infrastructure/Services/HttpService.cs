@@ -48,12 +48,9 @@ public class HttpService
 		return await SendRequestAsync<T>(request);
 	}
 
-	public async Task DeleteAsync(string uri, object value)
+	public async Task DeleteAsync(string uri)
 	{
-		var request = new HttpRequestMessage(HttpMethod.Delete, uri)
-		{
-			Content = new StringContent(JsonSerializer.Serialize(value), Encoding.UTF8, "application/json")
-		};
+		var request = new HttpRequestMessage(HttpMethod.Delete, uri);
 		
 		await SendRequestAsync<object>(request);
 	}
