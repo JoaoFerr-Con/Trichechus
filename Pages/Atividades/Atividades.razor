@@ -179,7 +179,7 @@
 	{
 		var result = await DialogService.OpenAsync<NovaAtividadeDialog>("Nova Atividade",
 		new Dictionary<string, object> { { "UserName", userName! } },
-		new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+		new DialogOptions { Width = "800px", Height = "auto", Resizable = true, Draggable = true });
 
 		if (result != null)
 		{
@@ -192,7 +192,7 @@
 	{
 		var result = await DialogService.OpenAsync<EditarAtividadeDialog>("Editar Atividade",
 		new Dictionary<string, object> { { "AtividadeId", atividade.Id }, { "UserName", userName! } },
-		new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+		new DialogOptions { Width = "700px", Height = "auto", Resizable = true, Draggable = true });
 
 		if (result != null)
 		{
@@ -200,6 +200,7 @@
 			NotificationService.Notify(NotificationSeverity.Success, "Sucesso", "Atividade atualizada com sucesso!");
 		}
 	}
+
 
 	private async Task ViewDetails(AtividadeDto atividade)
 	{

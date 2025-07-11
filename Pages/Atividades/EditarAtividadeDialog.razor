@@ -8,64 +8,61 @@
 @inject NotificationService NotificationService
 
 <RadzenTemplateForm TItem="UpdateAtividadeDto" Data="@model" Submit="@SalvarAtividade">
-	<div class="row">
-		<div class="col-md-12 mb-3">
-			<RadzenFormField Text="Título" Variant="Variant.Filled">
-				<RadzenTextBox @bind-Value="@model.Titulo" Name="Titulo" class="w-100" />
-				<RadzenRequiredValidator Component="Titulo" Text="O título é obrigatório" />
-			</RadzenFormField>
-		</div>
-	</div>
-	
-	<div class="row">
-		<div class="col-md-12 mb-3">
-			<RadzenFormField Text="Descrição" Variant="Variant.Filled">
-				<RadzenTextArea @bind-Value="@model.Descricao" Name="Descricao" class="w-100" Rows="5" />
-			</RadzenFormField>
-		</div>
-	</div>
-	
-	<div class="row">
-		<div class="col-md-6 mb-3">
-			<RadzenFormField Text="Situação" Variant="Variant.Filled">
-				<RadzenDropDown @bind-Value="@model.Situacao" Data="@situacoes" class="w-100" />
-			</RadzenFormField>
-		</div>
-		<div class="col-md-6 mb-3">
-			<RadzenFormField Text="Responsável" Variant="Variant.Filled">
-				<RadzenTextBox @bind-Value="@model.NomeResponsavel" Name="NomeResponsavel" class="w-100" />
-			</RadzenFormField>
-		</div>
-	</div>
-	
-	<div class="row">
-		<div class="col-md-6 mb-3">
-			<RadzenFormField Text="Prazo" Variant="Variant.Filled">
-				<RadzenDatePicker @bind-Value="@model.Prazo" Name="Prazo" class="w-100" DateFormat="dd/MM/yyyy" />
-				<RadzenRequiredValidator Component="Prazo" Text="O prazo é obrigatório" />
-			</RadzenFormField>
-		</div>
-		<div class="col-md-6 mb-3">
-			<RadzenFormField Text="Equipe Responsável" Variant="Variant.Filled">
-				<RadzenTextBox @bind-Value="@model.NomeEquipeResponsavel" Name="NomeEquipeResponsavel" class="w-100" />
-			</RadzenFormField>
-		</div>
-	</div>
-	
-	<div class="row">
-		<div class="col-md-6 mb-3">
-			<RadzenFormField Text="Tipo de Entrada" Variant="Variant.Filled">
-				<RadzenDropDown @bind-Value="@model.TipoEntrada" Data="@tiposEntrada" class="w-100" />
-			</RadzenFormField>
-		</div>
-	</div>
-	
-	<div class="row mt-3">
-		<div class="col-md-12 d-flex justify-content-end">
-			<RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@Cancel" class="me-2" />
-			<RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text="Salvar" />
-		</div>
-	</div>
+    <RadzenRow Class="gy-2">
+        <!-- Título / Prazo -->
+        <RadzenColumn Size="6">
+            <RadzenFormField Text="Título" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenTextBox @bind-Value="@model.Titulo" Name="Titulo" Style="width: 100%; height: 38px;" />
+                <RadzenRequiredValidator Component="Titulo" Text="O título é obrigatório" />
+            </RadzenFormField>
+        </RadzenColumn>
+
+        <RadzenColumn Size="6">
+            <RadzenFormField Text="Prazo" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenDatePicker @bind-Value="@model.Prazo" DateFormat="dd/MM/yyyy" Style="width: 100%; height: 38px;" />
+                <RadzenRequiredValidator Component="Prazo" Text="O prazo é obrigatório" />
+            </RadzenFormField>
+        </RadzenColumn>
+
+        <!-- Situação / Responsável -->
+        <RadzenColumn Size="6">
+            <RadzenFormField Text="Situação" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenDropDown @bind-Value="@model.Situacao" Data="@situacoes" Style="width: 100%; height: 38px;" />
+            </RadzenFormField>
+        </RadzenColumn>
+
+        <RadzenColumn Size="6">
+            <RadzenFormField Text="Responsável" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenTextBox @bind-Value="@model.NomeResponsavel" Name="NomeResponsavel" Style="width: 100%; height: 38px;" />
+            </RadzenFormField>
+        </RadzenColumn>
+
+        <!-- Tipo de Entrada / Equipe Responsável -->
+        <RadzenColumn Size="6">
+            <RadzenFormField Text="Tipo de Entrada" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenDropDown @bind-Value="@model.TipoEntrada" Data="@tiposEntrada" Style="width: 100%; height: 38px;" />
+            </RadzenFormField>
+        </RadzenColumn>
+
+        <RadzenColumn Size="6">
+            <RadzenFormField Text="Equipe Responsável" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenTextBox @bind-Value="@model.NomeEquipeResponsavel" Name="NomeEquipeResponsavel" Style="width: 100%; height: 38px;" />
+            </RadzenFormField>
+        </RadzenColumn>
+
+        <!-- Descrição (linha inteira) -->
+        <RadzenColumn Size="12">
+            <RadzenFormField Text="Descrição" Variant="Variant.Outlined" Style="width: 100%;">
+                <RadzenTextArea @bind-Value="@model.Descricao" Rows="5" Style="width: 100%; height: 100px;" />
+            </RadzenFormField>
+        </RadzenColumn>
+    </RadzenRow>
+
+    <!-- Botões -->
+    <div class="d-flex justify-content-end mt-4">
+        <RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@Cancel" class="me-2" />
+        <RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text="Salvar" />
+    </div>
 </RadzenTemplateForm>
 
 @code {
