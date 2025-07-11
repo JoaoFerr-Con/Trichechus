@@ -7,29 +7,38 @@
 <RadzenTemplateForm TItem="CreatePerfilDto" Data="@model" Submit="@OnSubmit">
 	<RadzenRow>
 		<RadzenColumn Size="12">
-			<RadzenCard>
-				<RadzenStack Orientation="Orientation.Vertical" Gap="10px">
+			<RadzenCard Style="max-width: 700px; margin: auto; box-shadow: 0 10px 20px rgba(0,0,0,0.1); padding: 24px;">
+				<ChildContent>
+					<RadzenStack Orientation="Orientation.Vertical" Gap="16px">
 
-					<RadzenText TextStyle="TextStyle.Subtitle2">Nome</RadzenText>
-					<RadzenTextBox @bind-Value="@model.Nome" Name="Nome" Style="width: 100%" aria-label="Nome"/>
-					<RadzenRequiredValidator Component="Nome" Text="O Nome é obrigatório" />
-					
-					<RadzenText TextStyle="TextStyle.Subtitle2">Descrição</RadzenText>
-					<RadzenTextArea @bind-Value="@model.Descricao" Name="Descricao" Style="width: 100%" aria-label="Descrição" />
+						<!-- Campo Nome -->
+						<RadzenFormField Text="Nome" Variant="Variant.Outlined">
+							<Start>
+								<RadzenIcon Icon="account_circle" />
+							</Start>
+							<ChildContent>
+								<RadzenTextBox @bind-Value="@model.Nome" Name="Nome" Style="width: 100%;" />
+								<RadzenRequiredValidator Component="Nome" Text="O Nome é obrigatório" />
+							</ChildContent>
+						</RadzenFormField>
 
-				</RadzenStack>
+						<!-- Campo Descrição -->
+						<RadzenFormField Text="Descrição" Variant="Variant.Outlined">
+							<ChildContent>
+								<RadzenTextArea @bind-Value="@model.Descricao" Name="Descricao" Rows="3" Style="width: 100%;" />
+							</ChildContent>
+						</RadzenFormField>
+
+						<!-- Botões -->
+						<RadzenStack Orientation="Orientation.Horizontal" JustifyContent="JustifyContent.End" Gap="12px">
+							<RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@Cancel" />
+							<RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text="Salvar" />
+						</RadzenStack>
+					</RadzenStack>
+				</ChildContent>
 			</RadzenCard>
-
 		</RadzenColumn>
 	</RadzenRow>
-
-	<div class="row mt-3">
-		<div class="col-md-12 d-flex justify-content-end">
-			<RadzenButton ButtonType="ButtonType.Button" ButtonStyle="ButtonStyle.Light" Text="Cancelar" Click="@Cancel"
-				class="me-2" />
-			<RadzenButton ButtonType="ButtonType.Submit" ButtonStyle="ButtonStyle.Primary" Text="Salvar" />
-		</div>
-	</div>
 </RadzenTemplateForm>
 
 @code {
