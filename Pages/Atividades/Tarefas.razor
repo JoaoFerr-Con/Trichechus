@@ -133,7 +133,7 @@
 		
 		var result = await DialogService.OpenAsync<NovaTarefaComAtividadeDialog>("Nova Tarefa", 
 			parameters,
-			new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+			new DialogOptions { Width = "700px", Height = "auto", Resizable = true, Draggable = true });
 		
 		if (result != null)
 		{
@@ -146,7 +146,7 @@
 	{
 		var result = await DialogService.OpenAsync<EditarTarefaDialog>("Editar Tarefa", 
 			new Dictionary<string, object> { { "TarefaId", tarefa.Id } },
-			new DialogOptions { Width = "700px", Height = "570px", Resizable = true, Draggable = true });
+			new DialogOptions { Width = "760px", Height = "auto", Resizable = true, Draggable = true });
 		
 		if (result != null)
 		{
